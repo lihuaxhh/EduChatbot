@@ -1,4 +1,4 @@
-# api/ocr.py
+# api/submission.py
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 import os
