@@ -1,18 +1,33 @@
+# app/services/embedding_service.py
+import os
+import json
 from sentence_transformers import SentenceTransformer
+
 
 class EmbeddingService:
     def __init__(self):
-        self.model = SentenceTransformer('shibing624/text2vec-base-chinese')
+        # 获取当前文件所在目录（app/services/）
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # 构建指向 app/run_models/text2vec-base-chinese 的路径
+        model_path = os.path.join(current_dir, "..", "run_models", "text2vec-base-chinese")
+
+        print("正在加载本地 text2vec 模型...")
+        self.model = SentenceTransformer(model_path)
+        print("✅ text2vec 模型加载完成")
 
     def build_text(self, questions):
         texts = []
         for q in questions:
             if hasattr(q, 'knowledge_tag'):
-                # Question ORM
-                types = q.knowledge_tag["types"]
-                properties = q.knowledge_tag["properties"]
+                tag = q.knowledge_tag
+                if isinstance(tag, str):
+                    try:
+                        tag = json.loads(tag)
+                    except Exception:
+                        tag = {}
+                types = tag.get("types") or tag.get("function_types") or []
+                properties = tag.get("properties") or tag.get("function_properties") or []
             else:
-                # ParsedQuestion
                 types = q.types
                 properties = q.properties
             parts = []

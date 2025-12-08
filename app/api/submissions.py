@@ -24,3 +24,4 @@ async def ocr_endpoint(file: UploadFile = File(...)):
     finally:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
+

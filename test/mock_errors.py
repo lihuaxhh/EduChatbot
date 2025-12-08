@@ -2,14 +2,17 @@ import random
 from datetime import datetime, timedelta
 from sqlalchemy import text
 from faker import Faker
-from app.db.session import SessionLocal
 from sqlalchemy.orm import Session
-
 import sys
 import pathlib
+from dotenv import load_dotenv
 
-PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+load_dotenv()
+# 将包含 app/ 的目录加入模块搜索路径（EduChatbot）
+BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+from app.db.session import SessionLocal
 
 fake = Faker("zh_CN")
 

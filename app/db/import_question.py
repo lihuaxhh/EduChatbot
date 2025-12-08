@@ -1,4 +1,4 @@
-import pandas as pd
+# app/db/import_question.py
 from sqlalchemy.orm import Session
 from ..models import Question  # 你的 SQLAlchemy 模型
 import re
@@ -6,6 +6,7 @@ import ast
 import sys
 import pathlib
 import pandas as pd
+import json
 from sqlalchemy import text
 from app.db.session import SessionLocal
 
@@ -89,11 +90,15 @@ def insert_questions_to_db():
             properties = clean_list(row["函数性质"])
             difficulty = str(row["难度等级"]).strip()
 
+            knowledge_tag_json = json.dumps({
+                "types": types,
+                "properties": properties
+            }, ensure_ascii=False, separators=(',', ':'))
             db_question = Question(
                 question=question,
                 normalized_question=normalized_question,
                 answer=answer,
-                knowledge_tag={"types": types, "properties": properties},
+                knowledge_tag=knowledge_tag_json,
                 difficulty_tag=difficulty,
             )
 

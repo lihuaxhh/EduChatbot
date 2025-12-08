@@ -1,3 +1,82 @@
+# # app/ml/classify_questions_from_teachers.py
+# import os
+# import numpy as np
+# import torch
+# import joblib
+# from tqdm import tqdm
+# from transformers import BertTokenizer, BertModel
+#
+# BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# MODEL_DIR = os.path.join(BASE_DIR, "question_auto_labels")
+#
+# TOKENIZER = None
+# BERT = None
+#
+#
+# def build_bert(model_name="bert-base-chinese"):
+#     global TOKENIZER, BERT
+#     if TOKENIZER is None:
+#         TOKENIZER = BertTokenizer.from_pretrained(model_name)
+#         BERT = BertModel.from_pretrained(model_name)
+#         BERT.eval()
+#     return TOKENIZER, BERT
+#
+#
+# def extract_cls_embeddings(bert, tokenizer, texts, max_length=128, batch_size=16):
+#     all_embs = []
+#     for i in tqdm(range(0, len(texts), batch_size), desc="Extracting BERT CLS"):
+#         batch = texts[i:i + batch_size]
+#         enc = tokenizer(batch, padding=True, truncation=True, max_length=max_length, return_tensors="pt")
+#         with torch.no_grad():
+#             out = bert(**enc)
+#             cls = out.last_hidden_state[:, 0, :].cpu().numpy()
+#             all_embs.append(cls)
+#     return np.vstack(all_embs)
+#
+# def auto_labels(question: str, answer: str):
+#     tokenizer, bert = build_bert()
+#     clf_type = joblib.load(os.path.join(MODEL_DIR, "clf_type.pkl"))
+#     clf_prop = joblib.load(os.path.join(MODEL_DIR, "clf_prop.pkl"))
+#     clf_diff = joblib.load(os.path.join(MODEL_DIR, "clf_diff.pkl"))
+#     mlb_type = joblib.load(os.path.join(MODEL_DIR, "mlb_type.pkl"))
+#     mlb_prop = joblib.load(os.path.join(MODEL_DIR, "mlb_prop.pkl"))
+#     le_diff = joblib.load(os.path.join(MODEL_DIR, "le_diff.pkl"))
+#     best_thr_type = joblib.load(os.path.join(MODEL_DIR, "best_thr_type.pkl"))
+#     best_thr_prop = joblib.load(os.path.join(MODEL_DIR, "best_thr_prop.pkl"))
+#
+#     text = question + " 答案：" + answer
+#     X = extract_cls_embeddings(bert, tokenizer, [text])
+#
+#     type_scores = clf_type.decision_function(X)[0]
+#     candidate_indices = [i for i, score in enumerate(type_scores) if score >= best_thr_type[i]]
+#     candidate_labels = [mlb_type.classes_[i] for i in candidate_indices]
+#     if '无' not in candidate_labels:
+#         pred_type_labels = candidate_labels
+#     else:
+#         idx_none = mlb_type.classes_.tolist().index('无')
+#         score_none = type_scores[idx_none]
+#         other_candidate_indices = [i for i in candidate_indices if mlb_type.classes_[i] != '无']
+#         other_candidate_scores = [type_scores[i] for i in other_candidate_indices]
+#         if not other_candidate_scores:
+#             pred_type_labels = ['无']
+#         else:
+#             if score_none >= max(other_candidate_scores):
+#                 pred_type_labels = ['无']
+#             else:
+#                 pred_type_labels = [lbl for lbl in candidate_labels if lbl != '无']
+#
+#     prop_scores = clf_prop.decision_function(X)[0]
+#     pred_prop_labels = [
+#         mlb_prop.classes_[i]
+#         for i, score in enumerate(prop_scores)
+#         if score >= best_thr_prop[i]
+#     ]
+#     pred_diff = clf_diff.predict(X)
+#     pred_diff_label = le_diff.inverse_transform(pred_diff)[0]
+#
+#     return pred_type_labels, pred_prop_labels, pred_diff_label
+#
+
 import os
 import numpy as np
 import torch
@@ -8,21 +87,57 @@ from transformers import BertTokenizer, BertModel
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "question_auto_labels")
 
+BERT_LOCAL_PATH = os.path.join(BASE_DIR, "..", "run_models", "bert")  # 注意是相对路径！
+
+# 全局变量缓存
 TOKENIZER = None
 BERT = None
+_MODELS_CACHE = {}  # 用于缓存加载好的sklearn模型
+
 
 def build_bert(model_name="bert-base-chinese"):
     global TOKENIZER, BERT
     if TOKENIZER is None:
-        TOKENIZER = BertTokenizer.from_pretrained(model_name)
-        BERT = BertModel.from_pretrained(model_name)
+        print("正在加载本地 BERT 模型...")
+        # ✅ 关键修改：从本地路径加载，不再使用 model_name
+        TOKENIZER = BertTokenizer.from_pretrained(BERT_LOCAL_PATH)
+        BERT = BertModel.from_pretrained(BERT_LOCAL_PATH)
         BERT.eval()
+        print("✅ BERT 模型加载完成")
     return TOKENIZER, BERT
+
+
+def load_ml_models_once():
+    """
+    懒加载 ML 模型，避免每次打标都读取磁盘文件
+    """
+    global _MODELS_CACHE
+    if not _MODELS_CACHE:
+        print("正在初始化 ML 分类模型 (首次加载需稍候)...")
+        try:
+            _MODELS_CACHE["clf_type"] = joblib.load(os.path.join(MODEL_DIR, "clf_type.pkl"))
+            _MODELS_CACHE["clf_prop"] = joblib.load(os.path.join(MODEL_DIR, "clf_prop.pkl"))
+            _MODELS_CACHE["clf_diff"] = joblib.load(os.path.join(MODEL_DIR, "clf_diff.pkl"))
+            _MODELS_CACHE["mlb_type"] = joblib.load(os.path.join(MODEL_DIR, "mlb_type.pkl"))
+            _MODELS_CACHE["mlb_prop"] = joblib.load(os.path.join(MODEL_DIR, "mlb_prop.pkl"))
+            _MODELS_CACHE["le_diff"] = joblib.load(os.path.join(MODEL_DIR, "le_diff.pkl"))
+            _MODELS_CACHE["best_thr_type"] = joblib.load(os.path.join(MODEL_DIR, "best_thr_type.pkl"))
+            _MODELS_CACHE["best_thr_prop"] = joblib.load(os.path.join(MODEL_DIR, "best_thr_prop.pkl"))
+            print("ML 分类模型加载成功")
+        except FileNotFoundError as e:
+            print(f"模型文件缺失: {e}")
+            raise e
+    return _MODELS_CACHE
 
 
 def extract_cls_embeddings(bert, tokenizer, texts, max_length=128, batch_size=16):
     all_embs = []
-    for i in tqdm(range(0, len(texts), batch_size), desc="Extracting BERT CLS"):
+    # 如果只有一条数据，不需要显示进度条，避免刷屏
+    iterable = range(0, len(texts), batch_size)
+    if len(texts) > batch_size:
+        iterable = tqdm(iterable, desc="Extracting BERT CLS")
+
+    for i in iterable:
         batch = texts[i:i + batch_size]
         enc = tokenizer(batch, padding=True, truncation=True, max_length=max_length, return_tensors="pt")
         with torch.no_grad():
@@ -32,22 +147,30 @@ def extract_cls_embeddings(bert, tokenizer, texts, max_length=128, batch_size=16
     return np.vstack(all_embs)
 
 def auto_labels(question: str, answer: str):
+    # 1. 获取 BERT
     tokenizer, bert = build_bert()
-    clf_type = joblib.load(os.path.join(MODEL_DIR, "clf_type.pkl"))
-    clf_prop = joblib.load(os.path.join(MODEL_DIR, "clf_prop.pkl"))
-    clf_diff = joblib.load(os.path.join(MODEL_DIR, "clf_diff.pkl"))
-    mlb_type = joblib.load(os.path.join(MODEL_DIR, "mlb_type.pkl"))
-    mlb_prop = joblib.load(os.path.join(MODEL_DIR, "mlb_prop.pkl"))
-    le_diff = joblib.load(os.path.join(MODEL_DIR, "le_diff.pkl"))
-    best_thr_type = joblib.load(os.path.join(MODEL_DIR, "best_thr_type.pkl"))
-    best_thr_prop = joblib.load(os.path.join(MODEL_DIR, "best_thr_prop.pkl"))
 
+    # 2. 获取缓存的 ML 模型
+    models = load_ml_models_once()
+    clf_type = models["clf_type"]
+    clf_prop = models["clf_prop"]
+    clf_diff = models["clf_diff"]
+    mlb_type = models["mlb_type"]
+    mlb_prop = models["mlb_prop"]
+    le_diff = models["le_diff"]
+    best_thr_type = models["best_thr_type"]
+    best_thr_prop = models["best_thr_prop"]
+
+    # 3. 提取特征
     text = question + " 答案：" + answer
     X = extract_cls_embeddings(bert, tokenizer, [text])
 
+    # 4. 预测题型 (Type)
     type_scores = clf_type.decision_function(X)[0]
     candidate_indices = [i for i, score in enumerate(type_scores) if score >= best_thr_type[i]]
     candidate_labels = [mlb_type.classes_[i] for i in candidate_indices]
+
+    # 处理 '无' 标签的逻辑
     if '无' not in candidate_labels:
         pred_type_labels = candidate_labels
     else:
@@ -63,14 +186,16 @@ def auto_labels(question: str, answer: str):
             else:
                 pred_type_labels = [lbl for lbl in candidate_labels if lbl != '无']
 
+    # 5. 预测性质 (Property)
     prop_scores = clf_prop.decision_function(X)[0]
     pred_prop_labels = [
         mlb_prop.classes_[i]
         for i, score in enumerate(prop_scores)
         if score >= best_thr_prop[i]
     ]
+
+    # 6. 预测难度 (Difficulty)
     pred_diff = clf_diff.predict(X)
     pred_diff_label = le_diff.inverse_transform(pred_diff)[0]
 
     return pred_type_labels, pred_prop_labels, pred_diff_label
-

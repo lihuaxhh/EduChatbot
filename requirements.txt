@@ -4,6 +4,7 @@ sqlalchemy
 python-dotenv
 py2neo
 pandas
+python-multipart
 pdf2image
 langchain-openai
 langchain-core

@@ -8,3 +8,4 @@ Base = declarative_base()
 # 导入所有模型，确保它们被注册到 Base.metadata
 from .user import *
 from .question import *
+from .chat_sessions import *

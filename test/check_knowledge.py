@@ -2,7 +2,9 @@
 import os
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
+load_dotenv()
 # 将项目根目录（edu_chatbot_backend）加入 Python 模块搜索路径
 PROJECT_ROOT = Path(__file__).parent.parent  # 上两级：test/ → 项目根
 sys.path.insert(0, str(PROJECT_ROOT))

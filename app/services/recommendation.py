@@ -1,8 +1,10 @@
 from .faiss_service import FaissService
-from ..crud.question import get_done_questions, get_difficulty
+from ..crud.question import get_done_questions, get_difficulty, has_wrong_submission
 from sqlalchemy.orm import Session
 
 def search_by_slot(db: Session, student_id: int, question_id: int, slot, expect_num):
+    if not has_wrong_submission(db, student_id, question_id):
+        return []
     slot_ranges = {
         "high": (0.9, 1.0),
         "mid": (0.75, 0.9),

@@ -1,13 +1,12 @@
-import os
-from sentence_transformers import SentenceTransformer
-from huggingface_hub import hf_hub_download
+# test_local_models.py
+from app.ml.classify_questions_from_teachers import build_bert
+from app.services.embedding_service import EmbeddingService
 
-os.environ['HTTP_PROXY'] = 'http://127.0.0.1:50075'
-os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:50075'
+# 测试 BERT
+tokenizer, bert = build_bert()
+print("BERT 已加载")
 
-model_name = 'shibing624/text2vec-base-chinese'
-
-
-print("正在下载模型到本地缓存...")
-model = SentenceTransformer(model_name)
-print("模型下载完成，本地缓存路径:", model_name)
+# 测试 text2vec
+emb = EmbeddingService()
+vec = emb.encode(["你好，这是测试"])
+print("text2vec 向量形状:", vec.shape)

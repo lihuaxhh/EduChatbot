@@ -104,8 +104,9 @@
     }
   }
 
-  // 默认加载一个初始中心节点
-  loadGraph('函数的定义');
+  const p = new URLSearchParams(window.location.search);
+  const center = p.get('center') || '函数的定义';
+  loadGraph(center);
 </script>
 </body>
 </html>

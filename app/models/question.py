@@ -1,6 +1,9 @@
+# app/models/question.py
+from sqlalchemy import Text
 from sqlalchemy import (
-    Column, Integer, String, Boolean, ForeignKey, TIMESTAMP, JSON, CheckConstraint
+    Column, Integer, String, Boolean, ForeignKey, TIMESTAMP, JSON, CheckConstraint, text
 )
+from datetime import datetime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from . import Base
@@ -12,9 +15,10 @@ class Question(Base):
     question = Column(String, nullable=False)
     normalized_question = Column(String, nullable=False, unique=True)
     answer = Column(String, nullable=False)
-    knowledge_tag = Column(JSON, nullable=False)
+    knowledge_tag = Column(Text, nullable=False)
     difficulty_tag = Column(String, nullable=False)  # 'easy', 'medium', 'hard'
-    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+    # 使用 Python 端本地时间，避免 SQLite CURRENT_TIMESTAMP 的 UTC 偏移
+    created_at = Column(TIMESTAMP, default=datetime.now, nullable=False)
 
     # Relationships
     submissions = relationship("StudentSubmission", back_populates="question")
@@ -27,7 +31,7 @@ class Assignment(Base):
     teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=False)
     assigned_student_ids = Column(JSON, nullable=False)  # List[int]
     assigned_question_ids = Column(JSON, nullable=False)  # List[int]
-    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+    created_at = Column(TIMESTAMP, default=datetime.now, nullable=False)
 
     # Relationships
     teacher = relationship("Teacher", back_populates="assignments")
@@ -41,7 +45,7 @@ class StudentSubmission(Base):
     assignment_id = Column(Integer, ForeignKey("assignments.id"), nullable=True)
     student_answer = Column(String, nullable=False)
     is_correct = Column(Boolean, nullable=True, default=None)
-    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+    created_at = Column(TIMESTAMP, default=datetime.now, nullable=False)
 
     # Relationships
     question = relationship("Question", back_populates="submissions")
@@ -70,7 +74,7 @@ class ErrorAnalysis(Base):
     error_type = Column(String, nullable=False)  # knowledge/calculation/misreading/logic/method
     analysis = Column(String, nullable=False)
     knowledge_node_id = Column(Integer, ForeignKey("knowledge_nodes.id"), nullable=True)
-    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+    created_at = Column(TIMESTAMP, default=datetime.now, nullable=False)
 
     # Relationships
     submission = relationship("StudentSubmission", back_populates="error_analysis")

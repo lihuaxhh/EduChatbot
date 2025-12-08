@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>班级断点榜单</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; margin: 20px; }
+    .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+    select, input, button { padding: 6px 10px; font-size: 14px; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .name { font-weight: 600; }
+    .diff { color: #2B7CE9; }
+    .error { color: #c00; margin-top: 10px; }
+    .actions { display: flex; gap: 8px; }
+    a.btn { text-decoration: none; background: #2B7CE9; color: #fff; padding: 6px 10px; border-radius: 4px; }
+  </style>
+  <script>
+    async function fetchClasses() {
+      const res = await fetch('/api/teacher/classes');
+      const data = await res.json();
+      return data;
+    }
+    function getDefaults() {
+      return { startDate: '2025-11-26', endDate: '2025-12-02', classId: '1', topK: 3 };
+    }
+    async function initControls() {
+      const defaults = getDefaults();
+      const clsSel = document.getElementById('classId');
+      const start = document.getElementById('startDate');
+      const end = document.getElementById('endDate');
+      const topK = document.getElementById('topK');
+      const classes = await fetchClasses();
+      clsSel.innerHTML = '';
+      classes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = String(c.id);
+        opt.textContent = c.name;
+        clsSel.appendChild(opt);
+      });
+      clsSel.value = classes.length ? String(classes[0].id) : defaults.classId;
+      start.value = defaults.startDate;
+      end.value = defaults.endDate;
+      topK.value = defaults.topK;
+    }
+    async function loadBreakpoints() {
+      const clsSel = document.getElementById('classId');
+      const start = document.getElementById('startDate');
+      const end = document.getElementById('endDate');
+      const topK = document.getElementById('topK');
+      const list = document.getElementById('list');
+      const err = document.getElementById('error');
+      list.innerHTML = '';
+      err.textContent = '';
+      try {
+        const url = `/api/knowledge-graph/breakpoints?top_k=${encodeURIComponent(topK.value)}`;
+        const res = await fetch(url, {
+          headers: {
+            'Class-ID': clsSel.value,
+            'Start-Date': start.value,
+            'End-Date': end.value
+          }
+        });
+        if (!res.ok) {
+          const t = await res.text();
+          throw new Error(t || String(res.status));
+        }
+        const data = await res.json();
+        data.forEach(item => {
+          const li = document.createElement('li');
+          const left = document.createElement('div');
+          const right = document.createElement('div');
+          left.innerHTML = `<span class="name">${item.name}</span> <span class="diff">diff: ${item.diff}</span>`;
+          right.className = 'actions';
+          const link = document.createElement('a');
+          const qs = new URLSearchParams({ name: item.name, classId: clsSel.value, startDate: start.value, endDate: end.value }).toString();
+          link.href = `/static/node_detail.html?${qs}`;
+          link.className = 'btn';
+          link.textContent = '查看详情';
+          right.appendChild(link);
+          const link2 = document.createElement('a');
+          link2.href = `/static/display_knowledge_graph.html?center=${encodeURIComponent(item.name)}`;
+          link2.className = 'btn';
+          link2.textContent = '查看结构';
+          right.appendChild(link2);
+          li.appendChild(left);
+          li.appendChild(right);
+          list.appendChild(li);
+        });
+      } catch (e) {
+        err.textContent = '加载失败: ' + e.message;
+      }
+    }
+    window.addEventListener('DOMContentLoaded', async () => {
+      await initControls();
+      await loadBreakpoints();
+      document.getElementById('refresh').addEventListener('click', loadBreakpoints);
+    });
+  </script>
+</head>
+<body>
+  <h1>班级异常错误增长点</h1>
+  <div class="controls">
+    <label>班级</label>
+    <select id="classId"></select>
+    <label>开始日期</label>
+    <input id="startDate" type="date">
+    <label>结束日期</label>
+    <input id="endDate" type="date">
+    <label>Top K</label>
+    <input id="topK" type="number" min="1" max="10" value="3" style="width:80px;">
+    <button id="refresh">刷新</button>
+  </div>
+  <div id="error" class="error"></div>
+  <ul id="list"></ul>
+</body>
+</html>

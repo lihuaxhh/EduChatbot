@@ -2,15 +2,19 @@ import random
 from datetime import datetime, timedelta
 from sqlalchemy import text
 from faker import Faker
-from app.db.session import SessionLocal
+
 from sqlalchemy.orm import Session
 import sys
-import pathlib
+from pathlib import Path
+from dotenv import load_dotenv
 
-# 🔍 自动定位项目根目录（不硬编码绝对路径！）
-PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+load_dotenv()
+# 将包含 app/ 的目录加入模块搜索路径（EduChatbot）
+BASE_DIR = Path(__file__).resolve().parents[1]
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+from app.db.session import SessionLocal
+
 
 fake = Faker("zh_CN")
 
@@ -44,6 +48,26 @@ START_STUDENT_ID = 1  # 假设学生 id 从 1 开始（可改）
 def mock_students_and_submissions():
     db: Session = SessionLocal()
     try:
+        # 保证 teacher(id=1) 与 classes 存在
+        from app.models.user import User, Teacher, Class
+        teacher = db.query(Teacher).filter(Teacher.id == 1).first()
+        if not teacher:
+            user = db.query(User).filter(User.phone == "18000000001").first()
+            if not user:
+                user = User(phone="18000000001", password_hash="test", role="teacher", is_active=True)
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            teacher = Teacher(id=1, user_id=user.id, name="测试教师")
+            db.add(teacher)
+            db.commit()
+        # 班级表：按配置确保存在且归属 teacher_id=1
+        for cls in CLASSES:
+            existing = db.query(Class).filter(Class.id == cls["id"]).first()
+            if not existing:
+                db.add(Class(id=cls["id"], name=cls["name"], teacher_id=1))
+        db.commit()
+
         # 🔥 清空表（兼容 SQLite / 其他）
         for table in ["student_submissions", "students"]:
             db.execute(text(f"DELETE FROM {table}"))

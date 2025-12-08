@@ -1,3 +1,4 @@
+# app/utils/convert_file.py
 from pdf2image import convert_from_path
 import subprocess
 import base64
@@ -15,7 +16,7 @@ def parse_document(path: str, tmp_dir: str) -> str:
         image_paths = pdf_to_images(path, tmp_dir)
         return images_to_text(image_paths)
 
-    elif ext in ["jpeg","png"]:
+    elif ext in [".jpeg",".png"]:
         # 单张图片直接 OCR
         return extract_question_from_image(path)
 
@@ -38,7 +39,7 @@ def docx_to_pdf(input_path, tmp_dir: str):
     return output_path
 
 def pdf_to_images(input_path, tmp_dir: str):
-    poppler_path = r"D:\pooler\Release-24.08.0-0\poppler-24.08.0\Library\bin"
+    poppler_path = r"D:\poppler-24.08.0\Library\bin"
     images = convert_from_path(input_path, dpi=300, poppler_path=poppler_path)
     output_paths = []
     for i, image in enumerate(images):

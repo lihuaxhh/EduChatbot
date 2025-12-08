@@ -1,3 +1,4 @@
+# \app\services\load_questions.py
 import re
 import os
 import numpy as np
@@ -86,9 +87,9 @@ def file_to_questions(path, db: Session, tmp_dir: str):
         new_embeddings = emb_service.encode(norm_dedup_questions).astype(np.float32)
     else:
         embeddings = emb_service.encode(norm_dedup_questions).astype(np.float32)
-        scores, _ = faiss_service.index.search(embeddings, k=1)
+        scores, _ = faiss_service.index.search(embeddings, k=1) #检索使用 IndexFlatIP 的“内积”相似度， k=1 只看最相似的一个已存向量
         for idx, q in enumerate(norm_dedup_questions):
-            if scores[idx, 0] < 0.99:
+            if scores[idx, 0] < 0.95:
                 embed_dedup_questions.append(q)
                 new_embeddings.append(embeddings[idx])
         if new_embeddings:
@@ -114,8 +115,13 @@ def file_to_questions(path, db: Session, tmp_dir: str):
         # print(db_question.knowledge_tag["properties"])
         # print(db_question.difficulty_tag)
         new_ids.append(db_question.id)
-        if len(new_embeddings) > 0:
-            faiss_service.add(new_embeddings, new_ids)
+
+    # 将新增向量与ID一次性加入索引（避免在循环中重复/不匹配加入）
+    if len(new_embeddings) > 0 and len(new_ids) > 0:
+        # 保证类型正确：向量为 float32，ID 为 int64
+        vectors_np = np.array(new_embeddings, dtype=np.float32)
+        ids_np = np.array(new_ids, dtype=np.int64)
+        faiss_service.add(vectors_np, ids_np)
 
 
 

@@ -1,3 +1,4 @@
+# app/models/user.py
 from sqlalchemy import (
     Column, Integer, String, Boolean, ForeignKey, TIMESTAMP, JSON, CheckConstraint
 )
@@ -5,6 +6,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from . import Base
 from typing import Optional
+from datetime import datetime
 
 
 class User(Base):
@@ -16,7 +18,7 @@ class User(Base):
     email = Column(String, nullable=True)
     role = Column(String, nullable=True)  # 'student', 'teacher', 'admin'
     is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+    created_at = Column(TIMESTAMP, default=datetime.now, nullable=False)
 
     # Relationships
     student = relationship("Student", back_populates="user", uselist=False)

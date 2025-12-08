@@ -1,10 +1,49 @@
+# \app\crud\question.py
 from sqlalchemy.orm import Session
 from typing import List
 
 from app.models import StudentSubmission
 from app.models.question import Question, KnowledgeNode
+import json
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
+
+# def create_question(
+#     db: Session,
+#     question: str,
+#     normalized_question: str,
+#     answer: str,
+#     types: list[str],
+#     properties: list[str],
+#     difficulty: str,
+# ):
+#     existing = db.query(Question).filter(
+#         Question.normalized_question == normalized_question
+#     ).first()
+#     if existing:
+#         return existing
+#     knowledge_tag = {
+#         "types": types,
+#         "properties": properties,
+#     }
+#     db_question = Question(
+#         question=question,
+#         normalized_question=normalized_question,
+#         answer=answer,
+#         knowledge_tag=knowledge_tag,
+#         difficulty_tag=difficulty,
+#     )
+#     db.add(db_question)
+#     try:
+#         db.commit()
+#     except IntegrityError:
+#         db.rollback()
+#         existing = db.query(Question).filter(
+#             Question.normalized_question == normalized_question
+#         ).first()
+#         return existing
+#     db.refresh(db_question)
+#     return db_question
 
 def create_question(
     db: Session,
@@ -16,15 +55,17 @@ def create_question(
     difficulty: str,
 ):
 
-    knowledge_tag = {
+    # ✅ 手动序列化为 JSON 字符串，确保中文不转义
+    knowledge_tag = json.dumps({
         "types": types,
-        "properties": properties,
-    }
+        "properties": properties
+    }, ensure_ascii=False, separators=(',', ':'))  # 紧凑格式，无空格
+
     db_question = Question(
         question=question,
         normalized_question=normalized_question,
         answer=answer,
-        knowledge_tag=knowledge_tag,
+        knowledge_tag=knowledge_tag,  # ← 现在是字符串
         difficulty_tag=difficulty,
     )
     db.add(db_question)
@@ -46,6 +87,14 @@ def get_done_questions(db: Session, student_id: int) -> set[int]:
     ).all()
     return {r[0] for r in rows}
 
+def has_wrong_submission(db: Session, student_id: int, question_id: int) -> bool:
+    row = db.query(StudentSubmission.id).filter(
+        StudentSubmission.student_id == student_id,
+        StudentSubmission.question_id == int(question_id),
+        StudentSubmission.is_correct.is_(False)
+    ).first()
+    return row is not None
+
 def get_difficulty(db: Session, question_id: int) -> str:
     question_id = int(question_id)
     row = db.query(Question.difficulty_tag).filter(
@@ -53,6 +102,7 @@ def get_difficulty(db: Session, question_id: int) -> str:
     ).first()
     # print(f"[DEBUG] qid={question_id}, query result={row}")
     return row[0]
+
 
 def get_question_by_id(db: Session, question_id: int):
     return db.query(Question).filter(Question.id == question_id).first()
