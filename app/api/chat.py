@@ -66,7 +66,7 @@ async def chat(
     # 添加后台任务
     background_tasks.add_task(save_history_task)
 
-    return StreamingResponse(generate(), media_type="text/plain; charset=utf-8")
+    return StreamingResponse(generate(), media_type="text/plain; charset=utf-8", headers={"X-Session-Id": session_id})
 
 
 @router.post("/chat/save")
@@ -104,3 +104,16 @@ async def remove_session(session_id: str, db: Session = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=404, detail="Session not found")
     return {"status": "deleted"}
+
+@router.post("/sessions")
+async def create_session(user_id: int, db: Session = Depends(get_db)):
+    sid = create_chat_session(db, user_id)
+    return {"session_id": sid}
+
+@router.get("/sessions/{session_id}/history")
+async def session_history(session_id: str, db: Session = Depends(get_db)):
+    try:
+        history = get_session_history(db, session_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return history

@@ -8,12 +8,21 @@ load_dotenv()
 from fastapi import FastAPI
 from app.api import correction, submissions, graph_strcture, graph_analysis, problems, teacher, knowledge, chat
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 
 
 app = FastAPI(title="EduChatbot Backend")
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(correction.router, prefix="/api", tags=["Correction"]) # 自动批改

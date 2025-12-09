@@ -48,6 +48,76 @@
 
 默认运行在 `http://localhost:8000`。
 
+### （新增）前端搭建与联调
+
+1. 安装 Node.js（建议 18+ 或 20+），验证：
+```
+node -v
+npm -v
+```
+
+2. 创建前端项目（在 `EduChatbot` 目录下）：
+```
+cd EduChatbot
+npm create vite@latest frontend -- --template vue-ts
+cd frontend
+npm i
+npm i axios pinia vue-router element-plus @antv/g6 echarts @vueuse/core dayjs
+```
+
+3. 设置前端环境变量（在 `EduChatbot/frontend` 新建 `.env.local`）：
+```
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+4. 配置开发代理（`EduChatbot/frontend/vite.config.ts`）：
+```ts
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+export default defineConfig({
+  plugins: [vue()],
+  server: { proxy: { '/api': 'http://127.0.0.1:8000' } }
+})
+```
+
+5. 运行前端开发服务：
+```
+npm run dev
+```
+默认地址：`http://localhost:5173/`
+
+6. 页面与接口对应关系：
+- `/chat` → `POST /api/chat`（流式 `text/plain`）
+- `/knowledge` → `GET /api/knowledge-graph?center=...`
+- `/problems` → `POST /api/problems/upload`
+- `/ocr` → `POST /api/submissions/ocr`
+
+7. 目录结构（示例）：
+```
+EduChatbot/
+├─ app/                 # 后端
+├─ frontend/            # 前端
+│  ├─ src/app/          # main.ts、App.vue、router、store、styles
+│  ├─ src/features/     # chat/knowledge/problems/submissions
+│  ├─ src/services/     # apiClient.ts、modules/*
+│  ├─ src/components/   # 通用组件
+│  ├─ src/types/        # 共享类型
+│  └─ vite.config.ts
+└─ run.py
+```
+
+8. Windows 常见问题：
+- 若出现 npm 缓存权限错误（EPERM）：使用项目级缓存
+```
+npm --cache .npm-cache --no-progress --prefer-online <your command>
+```
+或设置全局缓存
+```
+npm config set cache "%USERPROFILE%\\.npm-cache"
+```
+- CORS 报错：确认后端允许 `http://127.0.0.1:5173`，前端代理指向 `http://127.0.0.1:8000`
+- 流式未显示：检查后端 `StreamingResponse` 的 `media_type=text/plain` 与前端使用 `ReadableStream` 读取
+
 ### 5. 查看知识图谱（需 Neo4j 已启动并导入数据）
 
 1. **安装 Java 17+**  
@@ -106,6 +176,45 @@
 3. 安装依赖：
 
    `pip install pdf2image`
+
+### （新增）前端依赖与配置说明
+
+- Node 版本：建议使用 `Node.js 18` 或 `20`
+- 包管理：使用 `npm`（生成并提交 `package-lock.json` 以锁定依赖）
+- 前端主要依赖：
+  - 运行时：`vue`、`pinia`、`vue-router`、`axios`、`element-plus`、`@antv/g6`、`echarts`、`@vueuse/core`、`dayjs`
+  - 构建与类型：`vite`、`@vitejs/plugin-vue`、`typescript`、`@vue/tsconfig`、`vue-tsc`
+- 常用脚本：
+  - 开发：`npm run dev`
+  - 构建（含 TS 类型检查）：`npm run build`
+  - 预览构建产物：`npm run preview`
+- 环境变量（`EduChatbot/frontend/.env.local`）：
+  - `VITE_API_BASE_URL=http://127.0.0.1:8000`
+- 代理与路径别名（`EduChatbot/frontend/vite.config.ts`）：
+  - 代理：`/api → http://127.0.0.1:8000`
+  - 别名：`@ → src`
+- 首次安装：
+  - `cd EduChatbot/frontend && npm i`
+  - 如已有锁文件，优先使用 `npm ci` 保证安装一致性
+
+### （新增）版本控制：提交与忽略清单
+
+- 建议提交（必须或应当提交到仓库）：
+  - 后端代码：`EduChatbot/app/**`（不含本地 `.env` 与生成文件）
+  - 前端代码：`EduChatbot/frontend/src/**`、`index.html`、`vite.config.ts`
+  - 依赖清单与锁：`EduChatbot/requirements.txt`、`EduChatbot/frontend/package.json`、`EduChatbot/frontend/package-lock.json`
+  - 配置：`tsconfig*.json`、`.vscode/extensions.json`（可选）
+  - 文档与脚本：`EduChatbot/docs/**`、`run.py`、测试脚本 `test/**`
+
+- 必须忽略（不提交）：
+  - 虚拟环境与缓存：`.venv/`、`venv/`、`.npm-cache/`
+  - 依赖目录：`EduChatbot/frontend/node_modules/`
+  - 构建产物：`EduChatbot/frontend/dist/`
+  - 环境文件：`.env`、`.env.local`、`.env.production`
+  - 本地数据库与大型生成文件：`EduChatbot/app/db/*.db`、`EduChatbot/app/db/*.sqlite`、`faiss.index`、`id2vector.pkl`
+  - 临时/系统文件：`tmp/`、`.DS_Store`、`*.log`
+
+> 说明：锁文件 `package-lock.json` 应提交，以确保团队安装一致；环境文件与本地数据库不应提交，按 README 初始化即可复现环境。
 
 ## 🧪 开发与调试工具
 
