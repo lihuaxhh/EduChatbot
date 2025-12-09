@@ -5,19 +5,27 @@ export async function listSessions(userId: number) {
   return r.data as Array<{ session_id: string; title: string; is_pinned: boolean; created_at: string; updated_at: string }>
 }
 
-export async function streamChat(payload: { message: string; session_id?: string; user_id?: number }, onChunk: (t: string) => void) {
+export async function streamChat(payload: { message: string; session_id?: string; user_id?: number }, onChunk: (t: string) => void): Promise<string | null> {
   const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   })
-  const reader = resp.body!.getReader()
+  
+  const sessionId = resp.headers.get('X-Session-Id')
+  
+  if (!resp.body) return sessionId
+
+  const reader = resp.body.getReader()
   const decoder = new TextDecoder('utf-8')
+  
   while (true) {
     const { value, done } = await reader.read()
     if (done) break
     onChunk(decoder.decode(value, { stream: true }))
   }
+  
+  return sessionId
 }
 
 export async function getHistory(sessionId: string) {
@@ -28,4 +36,8 @@ export async function getHistory(sessionId: string) {
 export async function createSession(userId: number) {
   const r = await api.post(`/api/sessions`, null, { params: { user_id: userId } })
   return r.data as { session_id: string }
+}
+
+export async function deleteSession(sessionId: string) {
+    return api.delete(`/api/sessions/${sessionId}`)
 }

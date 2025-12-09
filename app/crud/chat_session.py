@@ -3,7 +3,9 @@
 from sqlalchemy.orm import Session
 from ..models.chat_sessions import ChatSession
 import uuid
+import json
 from datetime import datetime
+from sqlalchemy import text
 
 def create_chat_session(db: Session, user_id: int) -> str:
     session_id = str(uuid.uuid4())
@@ -20,10 +22,19 @@ def create_chat_session(db: Session, user_id: int) -> str:
     return session_id
 
 def get_session_history(db: Session, session_id: str) -> list:
+    # Use scalar query for better performance if just fetching one column
+    # Also handle the case where history_json might be returned as string by some drivers
     row = db.query(ChatSession.history_json).filter(ChatSession.session_id == session_id).first()
     if not row:
         raise ValueError("Session not found")
-    return (row[0] or [])
+    
+    history = row[0]
+    if isinstance(history, str):
+        try:
+            return json.loads(history)
+        except:
+            return []
+    return (history or [])
 
 def update_session_history(db: Session, session_id: str, new_messages: list):
     # 生成标题（仅首次或占位标题时）
@@ -36,27 +47,20 @@ def update_session_history(db: Session, session_id: str, new_messages: list):
             name = t or "新对话"
             break
 
-    # 仅更新需要的列，避免选择整行触发不存在列的错误
-    from sqlalchemy import text
-    now = datetime.utcnow()
-    db.execute(
-        text(
-            """
-            UPDATE chat_sessions
-            SET 
-                history_json = :history,
-                title = CASE WHEN title IS NULL OR title = '新对话' THEN COALESCE(:title, title) ELSE title END,
-                updated_at = :updated
-            WHERE session_id = :sid
-            """
-        ),
-        {
-            "history": new_messages,
-            "title": name,
-            "updated": now,
-            "sid": session_id,
-        },
-    )
+    # Use ORM update which handles JSON serialization automatically
+    # This is safer than raw SQL for JSON fields
+    update_data = {
+        "history_json": new_messages,
+        "updated_at": datetime.now()
+    }
+    
+    # Check if we should update title
+    # Logic: Update title if it's currently "新对话" or None
+    current_title = db.query(ChatSession.title).filter(ChatSession.session_id == session_id).scalar()
+    if (not current_title or current_title == "新对话") and name:
+        update_data["title"] = name
+
+    db.query(ChatSession).filter(ChatSession.session_id == session_id).update(update_data)
     db.commit()
 
 def get_user_sessions(db: Session, user_id: int):
@@ -69,6 +73,7 @@ def get_user_sessions(db: Session, user_id: int):
             ChatSession.updated_at,
         )
         .filter(ChatSession.user_id == user_id)
+        .order_by(ChatSession.updated_at.desc())
         .all()
     )
 

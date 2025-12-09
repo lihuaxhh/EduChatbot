@@ -22,8 +22,8 @@ def grade_answer_service(question_id: int, student_answer: str, db: Session):
         question.answer
     )
     print(result)
-    if (not result["is_correct"]
-            and result["error_type"] == "knowledge"
+    if (not result.is_correct
+            and result.error_type == ErrorType.KNOWLEDGE
             and (function_types or function_properties)):
         print("function_types:", function_types)
         print("function_properties:", function_properties)

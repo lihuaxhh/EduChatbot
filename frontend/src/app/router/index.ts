@@ -6,6 +6,9 @@ const router = createRouter({
     { path: '/chat', component: () => import('@/features/chat/views/ChatView.vue') },
     { path: '/knowledge', component: () => import('@/features/knowledge/views/KnowledgeGraph.vue') },
     { path: '/problems', component: () => import('@/features/problems/views/ProblemsView.vue') },
+    { path: '/paper/:id', component: () => import('@/features/submissions/views/PaperView.vue') },
+    { path: '/results/:assignmentId', component: () => import('@/features/submissions/views/ResultView.vue') },
+    { path: '/stats/:id', component: () => import('@/features/assignments/views/StatsView.vue') },
     { path: '/ocr', component: () => import('@/features/submissions/views/OCRView.vue') },
     { path: '/', redirect: '/chat' }
   ]

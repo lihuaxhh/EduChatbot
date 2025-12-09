@@ -29,12 +29,15 @@ class Assignment(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=False)
+    class_id = Column(Integer, ForeignKey("classes.id"), nullable=True) # New field
+    deadline = Column(TIMESTAMP, nullable=True) # New field
     assigned_student_ids = Column(JSON, nullable=False)  # List[int]
     assigned_question_ids = Column(JSON, nullable=False)  # List[int]
     created_at = Column(TIMESTAMP, default=datetime.now, nullable=False)
 
     # Relationships
     teacher = relationship("Teacher", back_populates="assignments")
+    clazz = relationship("Class", back_populates="assignments") # New relationship
 
 class StudentSubmission(Base):
     __tablename__ = "student_submissions"

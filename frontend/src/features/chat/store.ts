@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { listSessions, streamChat, getHistory, createSession } from '../../services/modules/chat'
+import { listSessions, streamChat, getHistory, createSession, deleteSession } from '../../services/modules/chat'
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
@@ -10,17 +10,26 @@ export const useChatStore = defineStore('chat', {
     loading: false as boolean
   }),
   actions: {
-    async loadSessions() {
+    async loadSessions(fetchCurrentHistory = true) {
       const data = await listSessions(this.userId)
       this.sessions = data
+      
+      // If no active session, select the first one
       if (!this.activeSessionId && this.sessions.length > 0) {
         this.activeSessionId = this.sessions[0]!.session_id
-        this.messages = await getHistory(this.activeSessionId)
-      } else if (this.activeSessionId) {
-        this.messages = await getHistory(this.activeSessionId)
+        if (fetchCurrentHistory) {
+            this.messages = await getHistory(this.activeSessionId)
+        }
+      } else if (this.activeSessionId && fetchCurrentHistory) {
+        try {
+            this.messages = await getHistory(this.activeSessionId)
+        } catch (e) {
+            console.error("Failed to load history", e)
+        }
       }
     },
     async selectSession(id: string) {
+      if (this.activeSessionId === id) return
       this.activeSessionId = id
       this.messages = await getHistory(id)
     },
@@ -28,24 +37,45 @@ export const useChatStore = defineStore('chat', {
       const r = await createSession(this.userId)
       this.activeSessionId = r.session_id
       this.messages = []
+      await this.loadSessions(false) 
+    },
+    async removeSession(id: string) {
+      await deleteSession(id)
+      if (this.activeSessionId === id) {
+        this.activeSessionId = ''
+        this.messages = []
+      }
       await this.loadSessions()
     },
     async sendMessage(text: string) {
       if (this.loading) return
       this.loading = true
-      const before = [...this.sessions]
+      
       this.messages.push({ role: 'user', content: text })
       const idx = this.messages.push({ role: 'assistant', content: '' }) - 1
-      await streamChat({ message: text, session_id: this.activeSessionId || undefined, user_id: this.userId }, chunk => {
-        const cur = this.messages[idx]
-        if (cur) cur.content = (cur.content || '') + chunk
-      })
-      await this.loadSessions()
-      if (!this.activeSessionId && this.sessions.length > 0) {
-        const created = this.sessions.find(s => !before.some(b => b.session_id === s.session_id))
-        if (created) this.activeSessionId = created.session_id
+      
+      try {
+        const sessionId = await streamChat({ 
+            message: text, 
+            session_id: this.activeSessionId || undefined, 
+            user_id: this.userId 
+        }, chunk => {
+            const cur = this.messages[idx]
+            if (cur) cur.content = (cur.content || '') + chunk
+        })
+
+        if (sessionId && sessionId !== this.activeSessionId) {
+            this.activeSessionId = sessionId
+        }
+        
+        await this.loadSessions(false)
+
+      } catch (e) {
+        console.error("Chat error:", e)
+        this.messages[idx].content += "\n[Error: Failed to send message]"
+      } finally {
+        this.loading = false
       }
-      this.loading = false
     }
   }
 })

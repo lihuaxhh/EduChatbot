@@ -1,15 +1,32 @@
 #app\api\problems.py
-from fastapi import APIRouter, UploadFile, File, Depends
+from fastapi import APIRouter, UploadFile, File, Depends, Query
 from sqlalchemy.orm import Session
 from ..db.session import get_db
 from ..services.load_questions import upload_questions
 from fastapi import APIRouter, Depends, HTTPException
-from ..crud.question import get_question_by_id
+from ..crud.question import get_question_by_id, get_questions, has_wrong_submission
 from ..services.recommendation import search_by_slot
 from ..schemas.recommendation import RecommendationRequest, RecommendationResponse, RecommendedItem
-from ..crud.question import has_wrong_submission
+from ..schemas.question import QuestionRead
+from typing import List, Optional
+from pydantic import BaseModel
+
+class QuestionListResponse(BaseModel):
+    total: int
+    items: List[QuestionRead]
 
 router = APIRouter(prefix="/problems", tags=["Problems"])
+
+@router.get("/", response_model=QuestionListResponse)
+def list_questions(
+    skip: int = 0, 
+    limit: int = 20, 
+    difficulty: Optional[str] = Query(None),
+    knowledge: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    items, total = get_questions(db, skip=skip, limit=limit, difficulty=difficulty, knowledge=knowledge)
+    return {"total": total, "items": items}
 
 @router.post("/upload")
 def upload_question_file(
@@ -35,4 +52,3 @@ def recommend_questions(req: RecommendationRequest, db: Session = Depends(get_db
         found=len(final),
         items=[RecommendedItem(id=qid, score=score) for qid, score in final]
     )
-

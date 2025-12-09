@@ -107,6 +107,22 @@ def get_difficulty(db: Session, question_id: int) -> str:
 def get_question_by_id(db: Session, question_id: int):
     return db.query(Question).filter(Question.id == question_id).first()
 
+def get_questions(db: Session, skip: int = 0, limit: int = 20, difficulty: str = None, knowledge: str = None):
+    query = db.query(Question)
+    if difficulty:
+        query = query.filter(Question.difficulty_tag == difficulty)
+    if knowledge:
+        # Simple like search for knowledge tag (which is JSON string)
+        query = query.filter(Question.knowledge_tag.like(f"%{knowledge}%"))
+    
+    # Return total count for pagination
+    total = query.count()
+    items = query.offset(skip).limit(limit).all()
+    return items, total
+
+def get_question_by_normalized(db: Session, normalized_question: str):
+    return db.query(Question).filter(Question.normalized_question == normalized_question).first()
+
 def get_candidate_knowledge_nodes(
     db: Session,
     function_types: List[str],

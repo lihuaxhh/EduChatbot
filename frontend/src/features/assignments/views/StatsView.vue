@@ -1,0 +1,40 @@
+<template>
+  <div style="padding:20px;">
+    <h2>作业统计</h2>
+    <div v-if="loading">加载中...</div>
+    <div v-else-if="stats" style="display:flex; gap:20px;">
+      <el-card shadow="hover">
+        <template #header>题目数量</template>
+        <div style="font-size:24px; font-weight:bold; color:#409eff;">{{ stats.total_questions }}</div>
+      </el-card>
+      <el-card shadow="hover">
+        <template #header>已提交人数</template>
+        <div style="font-size:24px; font-weight:bold; color:#67c23a;">{{ stats.total_students }}</div>
+      </el-card>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { getAssignmentStats } from '../../../services/modules/assignments'
+import { ElMessage } from 'element-plus'
+
+const route = useRoute()
+const assignmentId = Number(route.params.id)
+const loading = ref(false)
+const stats = ref<{ total_students: number; total_questions: number } | null>(null)
+
+onMounted(async () => {
+  if (!assignmentId) return
+  loading.value = true
+  try {
+    stats.value = await getAssignmentStats(assignmentId)
+  } catch (e) {
+    ElMessage.error('加载统计失败')
+  } finally {
+    loading.value = false
+  }
+})
+</script>

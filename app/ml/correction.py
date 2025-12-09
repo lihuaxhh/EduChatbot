@@ -49,6 +49,9 @@ def grading_logic(
             "student_answer": student_answer,
             "correct_answer": correct_answer
         })
+        # Ensure we return a Pydantic model, as JsonOutputParser might return a dict
+        if isinstance(result, dict):
+            return CorrectionResponse(**result)
         return result
     except Exception as e:
         print(f"解析失败: {e}")

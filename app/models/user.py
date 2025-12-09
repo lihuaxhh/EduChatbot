@@ -62,3 +62,4 @@ class Class(Base):
     # Relationships
     teacher = relationship("Teacher", back_populates="classes")
     students = relationship("Student", back_populates="clazz")
+    assignments = relationship("Assignment", back_populates="clazz") # New relationship
