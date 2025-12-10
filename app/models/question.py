@@ -47,6 +47,7 @@ class StudentSubmission(Base):
     student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
     assignment_id = Column(Integer, ForeignKey("assignments.id"), nullable=True)
     student_answer = Column(String, nullable=False)
+    image_path = Column(String, nullable=True)
     is_correct = Column(Boolean, nullable=True, default=None)
     created_at = Column(TIMESTAMP, default=datetime.now, nullable=False)
 

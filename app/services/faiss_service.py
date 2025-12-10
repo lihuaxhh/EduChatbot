@@ -33,7 +33,7 @@ class FaissService:
         self.save()
 
     def get_vector_by_id(self, id):
-        return self.id2vector[id]
+        return self.id2vector.get(id)
 
     def search_vector(self, vector, k):
         vector = vector.reshape(1, -1).astype(np.float32)

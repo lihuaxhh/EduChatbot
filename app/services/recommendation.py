@@ -23,6 +23,8 @@ def search_by_slot(db: Session, student_id: int, question_id: int, slot, expect_
     faiss_service = FaissService(dim=768)
     index_size = faiss_service.index.ntotal
     vector = faiss_service.get_vector_by_id(question_id)
+    if vector is None:
+        return []
 
     # print(f"[DEBUG] question_id={question_id}, vector shape={vector.shape}, index_size={index_size}")
 

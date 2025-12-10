@@ -11,6 +11,6 @@ class Settings(BaseSettings):
     secret_key: str = os.getenv("SECRET_KEY", "your-secret-key")
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
-    db_init_mode: str = os.getenv("DB_INIT_MODE", "create")
+    db_init_mode: str = os.getenv("DB_INIT_MODE", "auto")
 
 settings = Settings()

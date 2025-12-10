@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>KaTeX 预览测试</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding: 24px; }
+      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+      .title { font-weight: 600; margin-bottom: 8px; }
+    </style>
+  </head>
+  <body>
+    <h1>KaTeX 公式预览</h1>
+    <div id="root"></div>
+    <script>
+      const samples = [
+        '函数 $f(x) = \\frac{1}{x} + \\sqrt{1 - x}$ 的定义域是 \\_\\_\\_\\_\\_\\_',
+        '已知函数 $f(x) = 4^x + \\log_2 x$，则 $f\\left(\\frac{1}{2}\\right) =$ \\_\\_\\_\\_\\_\\_'
+      ]
+      const root = document.getElementById('root')
+      samples.forEach((text, i) => {
+        const card = document.createElement('div')
+        card.className = 'card'
+        const title = document.createElement('div')
+        title.className = 'title'
+        title.innerText = `示例 ${i+1}`
+        const content = document.createElement('div')
+        content.innerHTML = text
+        card.appendChild(title)
+        card.appendChild(content)
+        root.appendChild(card)
+      })
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false }
+        ],
+        throwOnError: false
+      })
+    </script>
+  </body>
+</html>
+

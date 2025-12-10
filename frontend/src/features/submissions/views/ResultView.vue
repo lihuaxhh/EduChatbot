@@ -10,10 +10,10 @@
         <div style="margin-bottom:12px; font-weight:bold;">第 {{ idx + 1 }} 题</div>
         <div style="margin-bottom:8px;">
             <strong>学生答案：</strong>
-            <div v-if="res.student_answer.includes('[IMAGE]')">
-                <img :src="getImageUrl(res.student_answer)" style="max-width:300px; border:1px solid #ddd; margin: 5px 0;" />
-                <div v-if="res.student_answer.includes('[OCR]:')">
-                    <small>OCR识别内容: {{ res.student_answer.split('[OCR]:')[1] }}</small>
+            <div v-if="res.image_path || res.student_answer.includes('[IMAGE]')">
+                <img :src="getImageUrl(res)" style="max-width:300px; border:1px solid #ddd; margin: 5px 0;" />
+                <div v-if="res.student_answer && !res.student_answer.startsWith('[IMAGE]')">
+                    <small>OCR识别内容: {{ res.student_answer }}</small>
                 </div>
             </div>
             <div v-else>{{ res.student_answer }}</div>
@@ -34,6 +34,14 @@
                     <strong>分析建议：</strong>
                     <LatexText :content="res.analysis" />
                 </div>
+                <div v-if="getRecs(res.question_id).length" style="margin-top:8px;">
+                    <div style="color:#333; font-weight:500; margin-bottom:6px;">相似练习（巩固）：</div>
+                    <ul style="padding-left:18px; margin:0;">
+                        <li v-for="item in getRecs(res.question_id)" :key="item.id">
+                            题目ID：{{ item.id }}（相似度 {{ item.score.toFixed(2) }}）
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
       </div>
@@ -49,6 +57,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getSubmissionResults, type SubmissionResult } from '../../../services/modules/submissions'
+import { recommendForWrong, type RecommendationItem } from '../../../services/modules/problems'
 import { Check, Close } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import LatexText from '../../../components/LatexText.vue'
@@ -60,12 +69,21 @@ const studentId = Number(route.params.studentId) || 1 // Hardcoded default
 
 const loading = ref(false)
 const results = ref<SubmissionResult[]>([])
+const recs = ref<Record<number, RecommendationItem[]>>({})
 
 onMounted(async () => {
   if (!assignmentId) return
   loading.value = true
   try {
     results.value = await getSubmissionResults(assignmentId, studentId)
+    // 为错误题目请求推荐
+    const wrongIds = results.value.filter(r => r && r.is_correct === false).map(r => r.question_id)
+    for (const qid of wrongIds) {
+      try {
+        const r = await recommendForWrong(qid, studentId, 'high', 5)
+        recs.value[qid] = r.items || []
+      } catch (_) {}
+    }
   } catch (e) {
     ElMessage.error('加载结果失败')
   } finally {
@@ -73,9 +91,13 @@ onMounted(async () => {
   }
 })
 
-function getImageUrl(answer: string) {
-    const path = answer.split('\n')[0].replace('[IMAGE]', '')
-    return `${import.meta.env.VITE_API_BASE_URL || ''}/${path}`
+function getImageUrl(res: SubmissionResult) {
+    const sa = (res.student_answer || '')
+    const raw = res.image_path || (sa.startsWith('[IMAGE]') ? sa.split('\n')[0].replace('[IMAGE]', '') : '')
+    if (!raw) return ''
+    const path = raw.startsWith('/') ? raw : `/${raw}`
+    const base = import.meta.env.VITE_API_BASE_URL || ''
+    return base ? `${base}${path}` : path
 }
 
 function formatErrorType(type: string) {
@@ -87,5 +109,9 @@ function formatErrorType(type: string) {
         'method': '方法错误'
     }
     return map[type] || type
+}
+
+function getRecs(qid: number) {
+  return recs.value[qid] || []
 }
 </script>

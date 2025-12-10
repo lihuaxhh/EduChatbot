@@ -6,6 +6,7 @@ import pathlib
 load_dotenv()
 
 from fastapi import FastAPI
+from app.db.init_db import init_db
 from app.api import correction, submissions, graph_strcture, graph_analysis, problems, teacher, knowledge, chat, assignments
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,12 +14,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI(title="EduChatbot Backend")
+init_db()
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

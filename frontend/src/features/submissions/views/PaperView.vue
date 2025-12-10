@@ -105,17 +105,26 @@ async function submit() {
       }))
     }
     await submitAssignment(payload)
-    ElMessage.success('作业已提交，后台批改中')
-    
-    // Redirect to results page immediately or after delay
-    // For now, let's go to results view
-    // Note: In real world, might need to wait or show pending state.
-    // The user requirement says "Teacher can see result quickly, student sees uploaded".
-    // But user also mentioned "Student knows which one is wrong -> recommendation".
-    // So let's redirect to result view.
-    setTimeout(() => {
+    ElMessage.success('作业已提交，正在批改...')
+
+    // 现实友好：轮询结果到达后再跳转（最多等待 10 秒）
+    const start = Date.now()
+    const poll = async () => {
+      try {
+        const res = await getSubmissionResults(assignmentId, 1)
+        if (Array.isArray(res) && res.length > 0) {
+          router.push(`/results/${assignmentId}`)
+          return
+        }
+      } catch (_) {}
+      if (Date.now() - start < 10000) {
+        setTimeout(poll, 800)
+      } else {
+        // 超时仍然跳转，页面会自己请求并显示加载失败提示
         router.push(`/results/${assignmentId}`)
-    }, 1000)
+      }
+    }
+    poll()
     
   } catch (e) {
     ElMessage.error('提交失败')

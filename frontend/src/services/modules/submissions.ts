@@ -14,6 +14,7 @@ export async function uploadSubmissionImage(file: File) {
 export interface SubmissionResult {
   question_id: number
   student_answer: string
+  image_path?: string
   is_correct: boolean
   error_type?: string
   analysis?: string

@@ -10,15 +10,20 @@ const el = ref<HTMLDivElement | null>(null)
 
 function render() {
   if (!el.value) return
+  const raw = props.content || ''
+  const normalized = raw.replace(/\\\\/g, '\\')
+  el.value.innerHTML = normalized
   // @ts-ignore
-  if (window.katex) {
+  if (window.renderMathInElement) {
     // @ts-ignore
-    window.katex.render(props.content || '', el.value, {
-      throwOnError: false,
-      displayMode: false // Inline by default, or maybe check if it contains block math
+    window.renderMathInElement(el.value, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\(', right: '\\)', display: false }
+      ],
+      throwOnError: false
     })
-  } else {
-    el.value.innerText = props.content || ''
   }
 }
 
