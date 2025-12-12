@@ -10,8 +10,8 @@
           </div>
         </div>
       </div>
-      <div style="position:fixed; left:var(--aside-w); right:0; bottom:0; border-top:1px solid #eee; padding:12px; display:flex; gap:12px; background: rgba(255,255,255,.9); backdrop-filter: blur(8px); box-shadow: 0 -6px 16px rgba(0,0,0,.06);">
-        <el-input v-model="text" placeholder="输入消息" />
+      <div style="position:fixed; left:calc(var(--aside-w) + 24px); right:24px; bottom:0; border-top:1px solid var(--border-soft); padding:12px 18px; display:flex; gap:12px; background: var(--surface); backdrop-filter: blur(8px); box-shadow: 0 -6px 16px rgba(0,0,0,.06); border-top-left-radius: 16px; border-top-right-radius: 16px;">
+        <el-input v-model="text" placeholder="输入消息" class="chat-input" />
         <el-button type="primary" :loading="chat.loading" @click="send">发送</el-button>
       </div>
     </div>
@@ -42,3 +42,8 @@ watch(
   }
 )
 </script>
+
+<style scoped>
+.chat-input .el-input__wrapper { background: var(--surface); border: 1px solid var(--border-soft); box-shadow: none; }
+.chat-input .el-input__inner { font-weight: 500; }
+</style>

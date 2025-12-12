@@ -1,14 +1,14 @@
 <template>
   <el-container style="height:100vh;">
-    <el-aside :width="asideWidth" class="sidebar-anim" style="border-right:1px solid #eee; position:relative;">
-      <div style="height:56px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px;">
+    <el-aside :width="asideWidth" class="sidebar-anim sidebar-gradient" style="border-right:1px solid var(--border-soft); position:relative;">
+      <div style="height:56px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:26px;">
         <span v-if="!collapsed" class="text-gradient">EduChatbot</span>
         <span v-else class="text-gradient">EC</span>
         <el-button circle size="small" class="ripple" @click="toggleCollapse" style="position:absolute; right:8px;">
           <el-icon><component :is="collapsed ? Expand : Fold" /></el-icon>
         </el-button>
       </div>
-      <el-menu :collapse="collapsed" :default-active="active" router>
+      <el-menu :collapse="collapsed" :default-active="active" router class="side-nav">
         <el-menu-item index="/chat"><el-icon><ChatLineRound /></el-icon><span>对话</span></el-menu-item>
         <el-menu-item index="/problems"><el-icon><Document /></el-icon><span>题库管理</span></el-menu-item>
         <el-menu-item index="/paper/1"><el-icon><Edit /></el-icon><span>学生作业</span></el-menu-item>
@@ -16,7 +16,11 @@
         <el-menu-item index="/wrongbook"><el-icon><Memo /></el-icon><span>错题本</span></el-menu-item>
         <el-menu-item index="/knowledge"><el-icon><DataAnalysis /></el-icon><span>数据分析</span></el-menu-item>
       </el-menu>
-      
+      <div class="aside-footer">
+        <el-avatar size="32">EC</el-avatar>
+        <span class="status-dot"></span>
+        <span class="status-text">Online</span>
+      </div>
     </el-aside>
     <el-container>
       <el-header style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #eee; height:56px;">
@@ -37,11 +41,6 @@
       </el-header>
       <el-main class="app-gradient-bg" :style="{ '--aside-w': asideWidth, '--accent-color': accentColor }">
         <transition name="fade"><router-view /></transition>
-        <div style="position:fixed; right:20px; bottom:20px; display:flex; flex-direction:column; gap:10px;">
-          <el-badge :value="1"><el-button circle type="primary" class="ripple" @click="go('/chat')"><el-icon><ChatLineRound /></el-icon></el-button></el-badge>
-          <el-button circle class="ripple" @click="go('/practice')"><el-icon><Reading /></el-icon></el-button>
-          <el-button circle class="ripple" @click="go('/wrongbook')"><el-icon><Memo /></el-icon></el-button>
-        </div>
       </el-main>
     </el-container>
   </el-container>

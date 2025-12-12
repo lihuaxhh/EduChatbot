@@ -1,35 +1,59 @@
 <template>
-  <div style="padding:12px 20px; max-width:800px; margin:0 auto;">
-    <h2 class="title-gradient-blue" style="margin:0 0 8px;">练习</h2>
-    <div v-if="questions.length===0" style="color:#909399;">练习清单为空</div>
-    <div v-else>
-      <div style="margin-bottom:16px;">
-        <el-button size="small" @click="prev" :disabled="index===0">上一题</el-button>
-        <el-button size="small" @click="next" :disabled="index>=questions.length-1">下一题</el-button>
-        <span style="margin-left:12px; color:#606266;">{{ index+1 }} / {{ questions.length }}</span>
+  <div class="page-wrap">
+    <div class="toolbar card-soft" style="margin-bottom:12px;">
+      <div class="toolbar-left">
+        <h2 class="title-gradient-blue" style="margin:0;">练习</h2>
+        <span style="margin-left:8px; color:#606266;">{{ index+1 }} / {{ questions.length }}</span>
       </div>
-      <div style="padding:16px; border:1px solid #eee; border-radius:8px; background:#fff;">
+      <div class="toolbar-right">
+        <el-button size="small" class="btn-outline" @click="prev" :disabled="index===0">上一题</el-button>
+        <el-button size="small" class="btn-ghost" @click="next" :disabled="index>=questions.length-1">下一题</el-button>
+      </div>
+    </div>
+    <div v-if="questions.length===0" style="color:#909399;">练习清单为空</div>
+    <div v-else class="page-grid">
+      <div class="mac-card soft-hover" style="padding:16px;">
         <LatexText :content="current.question" />
-        <div style="margin-top:12px;">
-          <el-input v-model="answer" type="textarea" :rows="3" placeholder="输入答案" />
-        </div>
-        <div style="margin-top:12px;">
+        <div class="divider-soft"></div>
+        <el-input v-model="answer" type="textarea" :rows="4" placeholder="输入答案" />
+        <div style="margin-top:12px; display:flex; gap:8px;">
           <el-button type="primary" @click="save">保存进度</el-button>
-          <el-button style="margin-left:8px;" @click="reveal">查看答案</el-button>
+          <el-button @click="reveal">查看答案</el-button>
         </div>
         <el-collapse-transition>
-          <div v-show="showAnswer" style="margin-top:10px; padding:10px; border:1px dashed #ddd; border-radius:6px;">
+          <div v-show="showAnswer" style="margin-top:10px; padding:10px; border:1px dashed var(--border-soft); border-radius:10px; background:#fff;">
             <strong>标准答案：</strong>
             <LatexText :content="current.answer" />
           </div>
         </el-collapse-transition>
+      </div>
+      <div class="aside-sticky">
+        <div class="panel">
+          <div class="panel-title">练习清单</div>
+          <el-scrollbar height="420px">
+            <div class="panel-list">
+              <div
+                v-for="(q, i) in questions"
+                :key="q.id"
+                class="panel-item"
+                :style="i===index ? 'box-shadow: inset 0 0 0 2px var(--ring-soft);' : ''"
+                @click="jump(i)"
+              >
+                <span>#{{ q.id }}</span>
+                <el-tag size="small" :type="store.progress[q.id] ? 'success' : 'info'">
+                  {{ store.progress[q.id] ? '已作答' : '未作答' }}
+                </el-tag>
+              </div>
+            </div>
+          </el-scrollbar>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { usePracticeStore } from '../store'
 import { getProblemById } from '../../../services/modules/problems'
 import LatexText from '../../../components/LatexText.vue'
@@ -62,4 +86,12 @@ function prev() { if (index.value>0) { index.value--; showAnswer.value=false; lo
 function next() { if (index.value<questions.value.length-1) { index.value++; showAnswer.value=false; loadProgress() } }
 async function save() { const cur = current.value; await store.saveProgress(cur.id, answer.value); ElMessage.success('已保存') }
 function reveal() { showAnswer.value = !showAnswer.value }
+function jump(i:number){ index.value=i; showAnswer.value=false; loadProgress() }
+
+function handleKey(e: KeyboardEvent){
+  if (e.key === 'ArrowLeft') prev()
+  else if (e.key === 'ArrowRight') next()
+}
+onMounted(() => window.addEventListener('keydown', handleKey))
+onBeforeUnmount(() => window.removeEventListener('keydown', handleKey))
 </script>
