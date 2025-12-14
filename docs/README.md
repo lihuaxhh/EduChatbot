@@ -10,6 +10,7 @@
 - 🏷️ **标准化知识点体系**：基于函数类型（如二次函数、三角函数）与函数性质（如单调性、奇偶性）进行双重标注。
 - 🖼️ **题目/解析图片管理**：支持题目与解析中嵌入图片，独立存储与关联。
 - 🧠 **知识图谱构建**：将知识点间的关系（如“先修”“依赖”）导入 Neo4j，实现可视化探索。
+- 💬 **智能学习助手**：基于 DashScope (qwen-max) 的对话系统，内置安全边界（仅回答学习相关问题），支持 **Markdown + LaTeX (KaTeX)** 混合渲染，完美显示多行公式、矩阵与对齐环境。
 - 🔍 **数据清洗与去重**：通过归一化处理（或可选向量比对）减少题目重复。
 
 ## 🛠️ 快速开始
@@ -62,7 +63,7 @@ cd EduChatbot
 npm create vite@latest frontend -- --template vue-ts
 cd frontend
 npm i
-npm i axios pinia vue-router element-plus @antv/g6 echarts @vueuse/core dayjs
+npm i axios pinia vue-router element-plus @antv/g6 echarts @vueuse/core dayjs marked dompurify
 ```
 
 3. 设置前端环境变量（在 `EduChatbot/frontend` 新建 `.env.local`）：
@@ -70,7 +71,18 @@ npm i axios pinia vue-router element-plus @antv/g6 echarts @vueuse/core dayjs
 VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
 
-4. 配置开发代理（`EduChatbot/frontend/vite.config.ts`）：
+4. 设置后端环境变量（在 `EduChatbot` 新建 `.env`）：
+```
+# Neo4j 配置
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password
+
+# DashScope (通义千问) API Key
+DASHSCOPE_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+5. 配置开发代理（`EduChatbot/frontend/vite.config.ts`）：
 ```ts
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -80,19 +92,19 @@ export default defineConfig({
 })
 ```
 
-5. 运行前端开发服务：
+6. 运行前端开发服务：
 ```
 npm run dev
 ```
 默认地址：`http://localhost:5173/`
 
-6. 页面与接口对应关系：
+7. 页面与接口对应关系：
 - `/chat` → `POST /api/chat`（流式 `text/plain`）
 - `/knowledge` → `GET /api/knowledge-graph?center=...`
 - `/problems` → `POST /api/problems/upload`
 - `/ocr` → `POST /api/submissions/ocr`
 
-7. 目录结构（示例）：
+8. 目录结构（示例）：
 ```
 EduChatbot/
 ├─ app/                 # 后端
@@ -106,7 +118,15 @@ EduChatbot/
 └─ run.py
 ```
 
-8. Windows 常见问题：
+9. 💡 **公式渲染技术说明**（ChatPanel.vue）：
+为了解决 Markdown 与 LaTeX 的语法冲突（如 `_` 转义、`$$` 分段），项目采用了 **“保护-解析-还原”** 策略：
+1. **预处理**：将 `$$...$$`、`\[...\]`、`\(...\)` 等 LaTeX 公式替换为 `<math-block>` 占位符。
+2. **Markdown 解析**：使用 `marked` 解析剩余文本（此时公式已被保护，不会被误解析）。
+3. **还原**：将占位符替换回原始 LaTeX 代码。
+4. **渲染**：使用 `KaTeX auto-render` (window.renderMathInElement) 对最终 DOM 进行数学公式渲染。
+> 注意：项目已在 `index.html` 中引入 KaTeX CDN。
+
+10. Windows 常见问题：
 - 若出现 npm 缓存权限错误（EPERM）：使用项目级缓存
 ```
 npm --cache .npm-cache --no-progress --prefer-online <your command>

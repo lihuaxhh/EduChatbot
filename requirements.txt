@@ -8,3 +8,4 @@ python-multipart
 pdf2image
 langchain-openai
 langchain-core
+dashscope
