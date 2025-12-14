@@ -12,15 +12,25 @@
         共 {{ questions.length }} 题
         <el-upload
           action=""
-          :http-request="batchOcrUpload"
+          :http-request="splitUpload"
           :show-file-list="false"
           multiple
           accept=".jpg,.jpeg,.png"
         >
-          <el-button size="small" class="btn-outline">批量上传照片填充</el-button>
+          <el-button size="small" class="btn-outline">整页上传（自动切分）</el-button>
         </el-upload>
+        <input ref="batchInput" type="file" accept=".jpg,.jpeg,.png" multiple style="display:none" @change="handleBatchFiles" />
+        <el-button size="small" class="btn-outline" @click="triggerBatch">整页批量上传（多张）</el-button>
         <el-button type="primary" size="small" class="btn-ghost" @click="submit" :loading="submitting">提交作业</el-button>
       </div>
+    </div>
+    <div v-if="splitUploading" style="margin:8px 0; max-width:480px;">
+      <div style="margin-bottom:6px; color:#374151; font-weight:500;">{{ splitProgressText }}</div>
+      <el-progress :percentage="splitProgress" :status="splitStatus" :text-inside="true" :stroke-width="16" />
+    </div>
+    <div class="card-soft" style="margin-bottom:12px; padding:10px; color:#4b5563;">
+      <strong>题号书写规范：</strong>
+      <span>请在纸面用清晰编号标注每题，推荐格式：1. 2. 3. 或 (1)(2)(3)，也可“第1题”。每题内容与题号在同一块区域，题号后建议留空格。</span>
     </div>
     <div v-if="loading">加载中...</div>
     <div v-else-if="questions.length===0" style="color:#909399;">您暂无作业</div>
@@ -88,13 +98,54 @@
       </div>
     </div>
   </div>
+
+  <el-dialog v-model="splitDialog" title="整页切分预览" width="720px">
+    <div v-if="splitBlocks.length===0" style="color:#909399;">未识别到题块，请确认题号书写清晰</div>
+    <div v-else>
+      <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="color:#374151; font-weight:600;">识别到 {{ splitBlocks.length }} 个题块</div>
+        <div style="display:flex; gap:8px;">
+          <el-button size="small" class="btn-outline" @click="autoAssign">按题号自动匹配</el-button>
+          <el-button size="small" type="primary" @click="confirmSplit">确认填充到作业</el-button>
+        </div>
+      </div>
+      <el-scrollbar height="420px">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div v-for="(group, gIndex) in groupedByPage" :key="gIndex">
+            <div style="font-weight:600; color:#374151; margin:6px 0;">第 {{ group.page }} 页</div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div v-for="(b, i) in group.blocks" :key="`${group.page}-${i}`" class="panel-item" style="align-items:flex-start;">
+                <div style="flex:1;">
+                  <div style="color:#6b7280; margin-bottom:6px;">建议题号：{{ b.question_no ?? '未识别' }}</div>
+                  <div style="white-space:pre-wrap;"><LatexText :content="b.text" /></div>
+                </div>
+                <div style="width:220px;">
+                  <el-select v-model="splitMap[b.index]" placeholder="选择对应题目" style="width:100%;">
+                    <el-option
+                      v-for="(q, idx) in questions"
+                      :key="q.id"
+                      :label="`第 ${idx+1} 题`"
+                      :value="q.id"
+                    />
+                  </el-select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-scrollbar>
+    </div>
+    <template #footer>
+      <el-button @click="splitDialog=false">关闭</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getAssignmentPaper } from '../../../services/modules/assignments'
-import { submitAssignment, uploadSubmissionImage, ocrImage, getSubmissionResults } from '../../../services/modules/submissions'
+import { submitAssignment, uploadSubmissionImage, getSubmissionResults, ocrSplit } from '../../../services/modules/submissions'
 import { ElMessage } from 'element-plus'
 import LatexText from '../../../components/LatexText.vue'
 
@@ -112,6 +163,26 @@ const answers = ref<Record<number, string>>({})
 const inputMethods = ref<Record<number, 'text' | 'image'>>({})
 const imagePreviews = ref<Record<number, string>>({})
 const answeredCount = ref(0)
+const splitDialog = ref(false)
+const splitBlocks = ref<Array<{ page: number; index: number; question_no: number | null; text: string }>>([])
+const splitMap = ref<Record<number, number>>({})
+const splitUploading = ref(false)
+const splitProgress = ref(0)
+const splitStatus = ref<'success'|'exception'|'active'>('active')
+const splitProgressText = ref('正在上传并切分...')
+const splitPageCounter = ref(0)
+const batchInput = ref<HTMLInputElement | null>(null)
+const NUMBER_STYLE_CACHE_KEY = 'split_number_style_map'
+
+const groupedByPage = computed(() => {
+  const map: Record<number, Array<{ page: number; index: number; question_no: number | null; text: string }>> = {}
+  for (const b of splitBlocks.value) {
+    const arr = map[b.page] || (map[b.page] = [])
+    arr.push(b)
+  }
+  const pages = Object.keys(map).map(n => Number(n)).sort((a, b) => a - b)
+  return pages.map(p => ({ page: p, blocks: map[p] }))
+})
 
 onMounted(async () => {
   if (!assignmentId) return
@@ -153,22 +224,108 @@ async function handleImageUpload(options: any, qid: number) {
     }
 }
 
-async function batchOcrUpload(options: any) {
+async function splitUpload(options: any) {
   try {
-    const r = await ocrImage(options.file as File)
-    const text = String(r.text || '').trim()
-    const emptyIds = Object.keys(answers.value).map(Number).filter(id => !(answers.value[id] || '').trim())
-    if (emptyIds.length === 0) {
-      ElMessage.info('没有空白题目可填充，已忽略')
-      return
-    }
-    // 按顺序填充第一个空白题
-    const targetId = emptyIds[0]!
-    answers.value[targetId] = text
-    computeAnswered()
-    ElMessage.success('已填充到首个空白题目')
+    splitUploading.value = true
+    splitProgress.value = 8
+    splitStatus.value = 'active'
+    splitProgressText.value = '正在上传...'
+    const timer = setInterval(() => {
+      if (splitProgress.value < 90) splitProgress.value += splitProgress.value < 50 ? 6 : 3
+    }, 400)
+    const r = await ocrSplit(options.file as File)
+    const page = ++splitPageCounter.value
+    const blocks = (r.blocks || []).map((b: any, idx: number) => ({ page, index: splitBlocks.value.length + idx, question_no: b.question_no, text: b.text }))
+    splitBlocks.value = splitBlocks.value.concat(blocks)
+    splitMap.value = { ...splitMap.value }
+    splitDialog.value = true
+    clearInterval(timer)
+    splitProgress.value = splitBlocks.value.length > 0 ? 100 : 95
+    splitStatus.value = splitBlocks.value.length > 0 ? 'success' : 'exception'
+    splitProgressText.value = splitBlocks.value.length > 0 ? '切分完成' : '未识别到题块'
   } catch (e) {
-    ElMessage.error('OCR 处理失败')
+    ElMessage.error('整页切分失败')
+    splitStatus.value = 'exception'
+    splitProgressText.value = '切分失败'
+  }
+  finally {
+    setTimeout(() => { splitUploading.value = false }, 500)
+  }
+}
+
+function triggerBatch() {
+  batchInput.value?.click()
+}
+async function handleBatchFiles(e: Event) {
+  const input = e.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+  splitUploading.value = true
+  splitProgress.value = 6
+  splitStatus.value = 'active'
+  splitProgressText.value = '正在上传并切分多页...'
+  const files = Array.from(input.files)
+  const timer = setInterval(() => {
+    if (splitProgress.value < 90) splitProgress.value += splitProgress.value < 50 ? 5 : 3
+  }, 400)
+  try {
+    for (const f of files) {
+      const r = await ocrSplit(f)
+      const page = ++splitPageCounter.value
+      const blocks = (r.blocks || []).map((b: any, idx: number) => ({ page, index: splitBlocks.value.length + idx, question_no: b.question_no, text: b.text }))
+      splitBlocks.value = splitBlocks.value.concat(blocks)
+    }
+    splitDialog.value = true
+    splitProgress.value = 100
+    splitStatus.value = 'success'
+    splitProgressText.value = '切分完成'
+  } catch (_) {
+    splitStatus.value = 'exception'
+    splitProgressText.value = '切分失败'
+    ElMessage.error('多页切分失败')
+  } finally {
+    clearInterval(timer)
+    setTimeout(() => { splitUploading.value = false }, 600)
+    input.value = '' // reset
+  }
+}
+
+function autoAssign() {
+  const cachedRaw = localStorage.getItem(NUMBER_STYLE_CACHE_KEY)
+  const cached: Record<number, number> = cachedRaw ? JSON.parse(cachedRaw) : {}
+  for (const b of splitBlocks.value) {
+    const qno = b.question_no
+    let targetIndex: number | undefined
+    if (typeof qno === 'number') {
+      if (cached[qno]) targetIndex = cached[qno]
+      else targetIndex = qno
+    }
+    if (typeof targetIndex === 'number' && targetIndex >= 1 && targetIndex <= questions.value.length) {
+      const target = questions.value[targetIndex - 1]
+      if (target) splitMap.value[b.index] = target.id
+    }
+  }
+}
+
+function confirmSplit() {
+  let applied = 0
+  const styleCache: Record<number, number> = {}
+  for (const b of splitBlocks.value) {
+    const qid = splitMap.value[b.index]
+    if (qid) {
+      answers.value[qid] = b.text || ''
+      inputMethods.value[qid] = 'text'
+      applied++
+      if (typeof b.question_no === 'number') {
+        const idx = questions.value.findIndex(q => q.id === qid)
+        if (idx >= 0) styleCache[b.question_no] = idx + 1
+      }
+    }
+  }
+  computeAnswered()
+  splitDialog.value = false
+  ElMessage.success(`已填充 ${applied} 个题块`)
+  if (Object.keys(styleCache).length > 0) {
+    localStorage.setItem(NUMBER_STYLE_CACHE_KEY, JSON.stringify(styleCache))
   }
 }
 

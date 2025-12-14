@@ -9,7 +9,7 @@
         </el-button>
       </div>
       <el-menu :collapse="collapsed" :default-active="active" router class="side-nav">
-        <el-menu-item index="/chat"><el-icon><ChatLineRound /></el-icon><span>对话</span></el-menu-item>
+        <el-menu-item index="/chat"><el-icon><ChatLineRound /></el-icon><span>学习助手</span></el-menu-item>
         <el-menu-item index="/problems"><el-icon><Document /></el-icon><span>题库管理</span></el-menu-item>
         <el-menu-item index="/paper/1"><el-icon><Edit /></el-icon><span>学生作业</span></el-menu-item>
         <el-menu-item index="/results/1"><el-icon><DataAnalysis /></el-icon><span>批改结果</span></el-menu-item>
@@ -61,7 +61,7 @@ const asideWidth = computed(() => collapsed.value ? '64px' : 'clamp(200px, 22vw,
 const crumbs = computed(() => {
   const parts = route.path.split('/').filter(Boolean)
   const map: Record<string, string> = {
-    chat: '对话',
+    chat: '学习助手',
     problems: '题库管理',
     paper: '学生作业',
     results: '批改结果',

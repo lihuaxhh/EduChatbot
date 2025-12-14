@@ -31,3 +31,10 @@ export async function ocrImage(file: File) {
   const r = await api.post('/api/submissions/ocr', form)
   return r.data as { text: string }
 }
+
+export async function ocrSplit(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  const r = await api.post('/api/submissions/ocr_split', form)
+  return r.data as { blocks: Array<{ question_no: number | null; text: string }> }
+}

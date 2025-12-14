@@ -8,7 +8,7 @@ import uuid
 import pathlib
 from typing import List
 from ..schemas.submission import SubmissionCreate
-from ..ml.ocr import extract_answer_from_image
+from ..ml.ocr import extract_answer_from_image, extract_blocks_from_image
 from ..crud.submission import create_submissions
 from ..db.session import get_db
 from ..models.question import StudentSubmission, ErrorAnalysis
@@ -84,6 +84,24 @@ async def ocr_endpoint(file: UploadFile = File(...)):
         return JSONResponse({"text": extracted_text})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OCR failed: {str(e)}")
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+@router.post("/ocr_split")
+async def ocr_split_endpoint(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+        raise HTTPException(status_code=400, detail="Only PNG/JPG images are allowed.")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+
+    try:
+        blocks = extract_blocks_from_image(tmp_path)
+        return JSONResponse({"blocks": blocks})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OCR split failed: {str(e)}")
     finally:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)

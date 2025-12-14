@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from ..services.chat import stream_chat, save_message_to_history
+from ..services.chat import stream_chat, save_message_to_history, normalize_markdown_latex
 from ..crud.chat_session import create_chat_session, get_user_sessions, delete_session, get_session_history
 from ..db.session import get_db
 from ..core.config import settings
@@ -48,6 +48,7 @@ async def chat(
         nonlocal full_ai_response
         async for chunk in stream_chat(messages):
             full_ai_response += chunk
+            # 维持真正的流式输出：逐块写回前端
             yield chunk
 
     # 定义后台保存函数

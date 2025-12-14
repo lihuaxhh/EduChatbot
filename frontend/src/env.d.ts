@@ -4,3 +4,10 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>
   export default component
 }
+declare global {
+  interface Window {
+    renderMathInElement?: (el: HTMLElement, opts?: any) => void
+    katex?: { renderToString: (expr: string, opts?: any) => string }
+  }
+}
+export {}
