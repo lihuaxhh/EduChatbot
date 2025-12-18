@@ -13,9 +13,12 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    phone = Column(String, unique=True, index=True, nullable=False)
+    username = Column(String, unique=True, index=True, nullable=False)
+    phone = Column(String, unique=True, index=True, nullable=True)
     password_hash = Column(String, nullable=False)
     email = Column(String, nullable=True)
+    avatar = Column(String, nullable=True)
+    nickname = Column(String, nullable=True)
     role = Column(String, nullable=True)  # 'student', 'teacher', 'admin'
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(TIMESTAMP, default=datetime.now, nullable=False)

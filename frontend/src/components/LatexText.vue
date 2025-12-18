@@ -4,6 +4,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+// @ts-ignore
+import renderMathInElement from 'katex/dist/contrib/auto-render.mjs'
 
 const props = defineProps<{ content: string }>()
 const el = ref<HTMLDivElement | null>(null)
@@ -13,18 +15,15 @@ function render() {
   const raw = props.content || ''
   const normalized = raw.replace(/\\\\/g, '\\')
   el.value.innerHTML = normalized
-  // @ts-ignore
-  if (window.renderMathInElement) {
-    // @ts-ignore
-    window.renderMathInElement(el.value, {
-      delimiters: [
-        { left: '$$', right: '$$', display: true },
-        { left: '$', right: '$', display: false },
-        { left: '\\(', right: '\\)', display: false }
-      ],
-      throwOnError: false
-    })
-  }
+  
+  renderMathInElement(el.value, {
+    delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '$', right: '$', display: false },
+      { left: '\\(', right: '\\)', display: false }
+    ],
+    throwOnError: false
+  })
 }
 
 onMounted(render)

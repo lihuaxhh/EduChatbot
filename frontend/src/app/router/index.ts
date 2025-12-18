@@ -3,6 +3,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: '/login', component: () => import('@/features/auth/views/LoginView.vue') },
+    { path: '/register', component: () => import('@/features/auth/views/RegisterView.vue') },
     { path: '/chat', component: () => import('@/features/chat/views/ChatView.vue') },
     { path: '/knowledge', component: () => import('@/features/knowledge/views/KnowledgeGraph.vue') },
     { path: '/problems', component: () => import('@/features/problems/views/ProblemsView.vue') },
@@ -12,8 +14,21 @@ const router = createRouter({
     { path: '/ocr', component: () => import('@/features/submissions/views/OCRView.vue') },
     { path: '/practice', component: () => import('@/features/practice/views/PracticeView.vue') },
     { path: '/wrongbook', component: () => import('@/features/wrongbook/views/WrongBook.vue') },
+    { path: '/profile', component: () => import('@/features/profile/views/ProfileView.vue') },
     { path: '/', redirect: '/chat' }
   ]
+})
+
+router.beforeEach((to, _from, next) => {
+  const publicPages = ['/login', '/register'];
+  const authRequired = !publicPages.includes(to.path);
+  const loggedIn = localStorage.getItem('token');
+
+  if (authRequired && !loggedIn) {
+    return next('/login');
+  }
+
+  next();
 })
 
 export default router

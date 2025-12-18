@@ -10,4 +10,10 @@ declare global {
     katex?: { renderToString: (expr: string, opts?: any) => string }
   }
 }
+
+declare module 'katex/dist/contrib/auto-render.mjs' {
+  const renderMathInElement: (el: HTMLElement, options?: any) => void
+  export default renderMathInElement
+}
+
 export {}

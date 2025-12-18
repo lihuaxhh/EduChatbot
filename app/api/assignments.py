@@ -8,18 +8,21 @@ from app.schemas.assignment import AssignmentCreate, AssignmentRead, AssignmentS
 from app.crud.assignment import create_assignment, get_assignment, get_assignment_stats_base
 from app.services.assignment_pipeline import process_assignment_upload
 from app.models.question import Question
+from app.models.user import User
+from .deps import get_current_active_teacher
 
 router = APIRouter(prefix="/assignments", tags=["Assignments"])
 
 @router.post("/upload", response_model=AssignmentRead)
 def upload_assignment(
     file: UploadFile = File(...),
-    teacher_id: int = Form(...),
     class_id: int = Form(...),
     title: Optional[str] = Form(None),
     deadline: Optional[str] = Form(None), # Receive as string, parse manually
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
 ):
+    teacher_id = current_user.teacher.id
     deadline_dt = None
     if deadline:
         try:
@@ -36,11 +39,10 @@ def upload_assignment(
 @router.post("/", response_model=AssignmentRead)
 def create_assignment_manual(
     assignment: AssignmentCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
 ):
-    # Ensure teacher_id matches logic (e.g. current user)
-    # For now, trust the input or overwrite if we had auth
-    return create_assignment(db, assignment, assignment.teacher_id)
+    return create_assignment(db, assignment, current_user.teacher.id)
 
 @router.get("/{id}", response_model=AssignmentRead)
 def read_assignment(id: int, db: Session = Depends(get_db)):

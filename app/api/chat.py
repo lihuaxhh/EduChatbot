@@ -7,6 +7,8 @@ from ..services.chat import stream_chat, save_message_to_history, normalize_mark
 from ..crud.chat_session import create_chat_session, get_user_sessions, delete_session, get_session_history
 from ..db.session import get_db
 from ..core.config import settings
+from ..models.user import User
+from .deps import get_current_user
 import json
 
 router = APIRouter()
@@ -16,12 +18,13 @@ router = APIRouter()
 async def chat(
         request: Request,
         background_tasks: BackgroundTasks,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     data = await request.json()
     message = data.get("message")
     session_id = data.get("session_id")
-    user_id = data.get("user_id")
+    user_id = current_user.id
 
     print("DATABASE_URL:", settings.database_url)
     print("user_id:", user_id, "session_id:", session_id)
@@ -30,8 +33,6 @@ async def chat(
         raise HTTPException(status_code=400, detail="Message is required")
 
     if not session_id:
-        if not user_id:
-            raise HTTPException(status_code=400, detail="user_id required for new session")
         session_id = create_chat_session(db, user_id)
         print("created session_id:", session_id)
 
@@ -71,7 +72,7 @@ async def chat(
 
 
 @router.post("/chat/save")
-async def save_chat_history(request: Request, db: Session = Depends(get_db)):
+async def save_chat_history(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     data = await request.json()
     session_id = data.get("session_id")
     user_msg = data.get("user_message")
@@ -85,8 +86,8 @@ async def save_chat_history(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/sessions")
-async def list_sessions(user_id: int, db: Session = Depends(get_db)):
-    sessions = get_user_sessions(db, user_id)
+async def list_sessions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    sessions = get_user_sessions(db, current_user.id)
     return [
         {
             "session_id": s.session_id,
@@ -100,19 +101,20 @@ async def list_sessions(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/sessions/{session_id}")
-async def remove_session(session_id: str, db: Session = Depends(get_db)):
+async def remove_session(session_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # TODO: Check if session belongs to user
     success = delete_session(db, session_id)
     if not success:
         raise HTTPException(status_code=404, detail="Session not found")
     return {"status": "deleted"}
 
 @router.post("/sessions")
-async def create_session(user_id: int, db: Session = Depends(get_db)):
-    sid = create_chat_session(db, user_id)
+async def create_session(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    sid = create_chat_session(db, current_user.id)
     return {"session_id": sid}
 
 @router.get("/sessions/{session_id}/history")
-async def session_history(session_id: str, db: Session = Depends(get_db)):
+async def session_history(session_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     try:
         history = get_session_history(db, session_id)
     except ValueError:

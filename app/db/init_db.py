@@ -52,5 +52,30 @@ def init_db():
                             conn.execute(text(sql))
     print(f"✅ 数据库初始化成功！使用数据库: {settings.database_url}，模式: {mode}")
 
+    # Seed Admin
+    from sqlalchemy.orm import sessionmaker
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db = SessionLocal()
+    from models.user import User
+    from core.security import get_password_hash
+    
+    try:
+        admin = db.query(User).filter(User.username == "admin").first()
+        if not admin:
+            admin = User(
+                username="admin",
+                password_hash=get_password_hash("123456"),
+                role="admin",
+                nickname="Administrator",
+                is_active=True
+            )
+            db.add(admin)
+            db.commit()
+            print("✅ 管理员账号已创建: admin / 123456")
+    except Exception as e:
+        print(f"⚠️ 创建管理员失败: {e}")
+    finally:
+        db.close()
+
 if __name__ == "__main__":
     init_db()

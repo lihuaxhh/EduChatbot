@@ -1,15 +1,15 @@
 <template>
   <div style="flex:1; display:flex; height:100%;">
     <div style="flex:1; display:flex; flex-direction:column;">
-      <div ref="list" style="flex:1; overflow:auto; padding:16px; padding-bottom:96px;">
-        <div v-for="(m,i) in chat.messages" :key="i" style="margin-bottom:10px; display:flex; gap:8px;" :style="m.role==='user' ? 'justify-content:flex-end;' : 'justify-content:flex-start;'">
-          <el-avatar :size="28" :style="m.role==='user' ? 'background:#409eff;' : 'background:#67c23a;'">{{ m.role==='user' ? '我' : '助' }}</el-avatar>
-          <div :style="m.role==='user' ? userStyle : assistantStyle">
-            <div class="md" v-html="render(m.content)"></div>
-            <div style="text-align:right; font-size:12px; color:#909399; margin-top:6px;">{{ now }}</div>
-          </div>
+      <div ref="list" id="chat-list" style="flex:1; overflow:auto; padding:16px; padding-bottom:96px;">
+      <div v-for="(m,i) in chat.messages" :key="i" style="margin-bottom:10px; display:flex; gap:8px;" :style="m.role==='user' ? 'justify-content:flex-end;' : 'justify-content:flex-start;'">
+        <el-avatar :size="28" :style="m.role==='user' ? 'background:#409eff;' : 'background:#67c23a;'">{{ m.role==='user' ? '我' : '助' }}</el-avatar>
+        <div :style="m.role==='user' ? userStyle : assistantStyle">
+          <div class="md" v-html="render(m.content)"></div>
+          <div style="text-align:right; font-size:12px; color:#909399; margin-top:6px;">{{ now }}</div>
         </div>
       </div>
+    </div>
       <div style="position:fixed; left:calc(var(--aside-w) + 24px); right:24px; bottom:0; border-top:1px solid var(--border-soft); padding:12px 18px; display:flex; gap:12px; background: var(--surface); backdrop-filter: blur(8px); box-shadow: 0 -6px 16px rgba(0,0,0,.06); border-top-left-radius: 16px; border-top-right-radius: 16px;">
         <el-input v-model="text" placeholder="输入消息" class="chat-input" />
         <el-button type="primary" :loading="chat.loading" @click="send">发送</el-button>
@@ -22,7 +22,13 @@ import { ref, watch, nextTick } from 'vue'
 import { useChatStore } from '../store'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+// @ts-ignore
+import renderMathInElement from 'katex/dist/contrib/auto-render.mjs'
+
 const chat = useChatStore()
+const props = defineProps<{
+  initialMessage?: string
+}>()
 const text = ref('')
 const list = ref<HTMLDivElement|null>(null)
 const userStyle = 'max-width:70%; background:linear-gradient(135deg, #3b82f6, #2563EB); color:#fff; padding:10px; border-radius:10px 10px 0 10px; white-space:pre-wrap; box-shadow:0 6px 18px rgba(37,99,235,.18);'
@@ -69,6 +75,22 @@ function render(t: string) {
     return mathBlocks[i] || ''
   })
 
+  // 延时渲染，确保 DOM 已更新
+  setTimeout(() => {
+    const el = document.getElementById('chat-list')
+    if (el) {
+      renderMathInElement(el, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '\\(', right: '\\)', display: false },
+          { left: '$', right: '$', display: false }
+        ],
+        throwOnError: false
+      })
+    }
+  }, 0)
+
   return DOMPurify.sanitize(restoredHtml)
 }
 
@@ -84,17 +106,16 @@ watch(
     await nextTick()
     const el = list.value
     if (el) el.scrollTop = el.scrollHeight
-    const r = window.renderMathInElement
-    if (r) {
-      el?.querySelectorAll('.md').forEach(e => {
-        r(e as HTMLElement, { delimiters: [
-          {left: '$$', right: '$$', display: true},
-          {left: '$', right: '$', display: false},
-          {left: '\\[', right: '\\]', display: true},
-          {left: '\\(', right: '\\)', display: false}
-        ], throwOnError: false })
-      })
-    }
+    
+    // 使用导入的 renderMathInElement
+    el?.querySelectorAll('.md').forEach(e => {
+      renderMathInElement(e as HTMLElement, { delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\[', right: '\\]', display: true},
+        {left: '\\(', right: '\\)', display: false}
+      ], throwOnError: false })
+    })
   }
 )
 </script>

@@ -3,11 +3,18 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.db.session import get_db
 from app.models.question import StudentSubmission, Question
+from app.models.user import User
+from .deps import get_current_active_student
 
 router = APIRouter(prefix="/wrongbook", tags=["Wrongbook"])
 
 @router.get("/list")
-def list_wrongbook(student_id: int = Query(...), group_by: str = Query("time"), db: Session = Depends(get_db)):
+def list_wrongbook(
+    group_by: str = Query("time"), 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_active_student)
+):
+    student_id = current_user.student.id
     rows = db.query(StudentSubmission, Question).join(Question, StudentSubmission.question_id == Question.id).filter(
         StudentSubmission.student_id == student_id,
         StudentSubmission.is_correct.is_(False)

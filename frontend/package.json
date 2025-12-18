@@ -16,12 +16,14 @@
     "dompurify": "^3.3.1",
     "echarts": "^6.0.0",
     "element-plus": "^2.12.0",
+    "katex": "^0.16.27",
     "marked": "^17.0.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.24",
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
+    "@types/katex": "^0.16.7",
     "@types/node": "^24.10.1",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.8.1",

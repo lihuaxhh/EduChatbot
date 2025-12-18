@@ -7,7 +7,7 @@ load_dotenv()
 
 from fastapi import FastAPI
 from app.db.init_db import init_db
-from app.api import correction, submissions, graph_strcture, graph_analysis, problems, teacher, knowledge, chat, assignments, practice, wrongbook
+from app.api import correction, submissions, graph_strcture, graph_analysis, problems, teacher, knowledge, chat, assignments, practice, wrongbook, auth, upload
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -32,6 +32,8 @@ app.add_middleware(
 )
 
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
+app.include_router(auth.router, prefix="/api", tags=["Auth"])
+app.include_router(upload.router, prefix="/api", tags=["Upload"])
 app.include_router(correction.router, prefix="/api", tags=["Correction"]) # 自动批改
 app.include_router(problems.router, prefix="/api", tags=["Problems"]) # 教师上传题目，错题推荐
 app.include_router(submissions.router, prefix="/api", tags=["Submissions"]) # 学生提交答案
@@ -42,3 +44,6 @@ app.include_router(knowledge.router, prefix="/api", tags=["Knowledge"])
 app.include_router(assignments.router, prefix="/api", tags=["Assignments"])
 app.include_router(practice.router, prefix="/api", tags=["Practice"])
 app.include_router(wrongbook.router, prefix="/api", tags=["Wrongbook"])
+
+
+

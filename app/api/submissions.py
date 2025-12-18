@@ -14,6 +14,8 @@ from ..db.session import get_db
 from ..models.question import StudentSubmission, ErrorAnalysis
 from ..services.submission import process_submission
 from pydantic import BaseModel
+from ..models.user import User
+from .deps import get_current_active_student
 
 router = APIRouter(prefix="/submissions", tags=["Submissions"])
 
@@ -29,7 +31,12 @@ class SubmissionResultResponse(BaseModel):
     analysis: str = None
 
 @router.get("/results", response_model=List[SubmissionResultResponse])
-def get_submission_results(assignment_id: int, student_id: int, db: Session = Depends(get_db)):
+def get_submission_results(
+    assignment_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_student)
+):
+    student_id = current_user.student.id
     submissions = db.query(StudentSubmission).filter(
         StudentSubmission.assignment_id == assignment_id,
         StudentSubmission.student_id == student_id
@@ -50,7 +57,15 @@ def get_submission_results(assignment_id: int, student_id: int, db: Session = De
     return results
 
 @router.post("/")
-def submit_assignment(sub: SubmissionCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def submit_assignment(
+    sub: SubmissionCreate, 
+    background_tasks: BackgroundTasks, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_student)
+):
+    # Force student_id to match the authenticated user
+    sub.student_id = current_user.student.id
+    
     count = create_submissions(db, sub)
     results = process_submission(sub, db)
     return {"status": "ok", "submitted_count": count, "results": results}

@@ -1,15 +1,16 @@
 #app\api\problems.py
-from fastapi import APIRouter, UploadFile, File, Depends, Query
+from fastapi import APIRouter, UploadFile, File, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from ..db.session import get_db
 from ..services.load_questions import upload_questions
-from fastapi import APIRouter, Depends, HTTPException
 from ..crud.question import get_question_by_id, get_questions, has_wrong_submission
 from ..services.recommendation import search_by_slot
 from ..schemas.recommendation import RecommendationRequest, RecommendationResponse, RecommendedItem
 from ..schemas.question import QuestionRead
 from typing import List, Optional
 from pydantic import BaseModel
+from app.models.user import User
+from .deps import get_current_active_teacher, get_current_active_student
 
 class QuestionListResponse(BaseModel):
     total: int
@@ -32,13 +33,19 @@ def list_questions(
 def upload_question_file(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
 ):
-    teacher_id = 1  # 先写死，后续再接入登录系统
+    teacher_id = current_user.teacher.id
     result = upload_questions(file, db, teacher_id)
     return result
 
 @router.post("/{problem_id}/recommendation", response_model=RecommendationResponse)
-def recommend_questions(req: RecommendationRequest, db: Session = Depends(get_db)):
+def recommend_questions(
+    req: RecommendationRequest, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_student)
+):
+    req.student_id = current_user.student.id
     question = get_question_by_id(db, req.question_id)
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")

@@ -63,7 +63,7 @@ cd EduChatbot
 npm create vite@latest frontend -- --template vue-ts
 cd frontend
 npm i
-npm i axios pinia vue-router element-plus @antv/g6 echarts @vueuse/core dayjs marked dompurify
+npm i axios pinia vue-router element-plus @antv/g6 echarts @vueuse/core dayjs marked dompurify katex
 ```
 
 3. 设置前端环境变量（在 `EduChatbot/frontend` 新建 `.env.local`）：
@@ -123,8 +123,8 @@ EduChatbot/
 1. **预处理**：将 `$$...$$`、`\[...\]`、`\(...\)` 等 LaTeX 公式替换为 `<math-block>` 占位符。
 2. **Markdown 解析**：使用 `marked` 解析剩余文本（此时公式已被保护，不会被误解析）。
 3. **还原**：将占位符替换回原始 LaTeX 代码。
-4. **渲染**：使用 `KaTeX auto-render` (window.renderMathInElement) 对最终 DOM 进行数学公式渲染。
-> 注意：项目已在 `index.html` 中引入 KaTeX CDN。
+4. **渲染**：使用 `katex` 本地依赖包中的 `renderMathInElement` 对最终 DOM 进行数学公式渲染（已移除 CDN 依赖，支持离线运行）。
+> 注意：样式文件已在 `main.ts` 中全局引入。
 
 10. Windows 常见问题：
 - 若出现 npm 缓存权限错误（EPERM）：使用项目级缓存

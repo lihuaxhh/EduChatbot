@@ -9,3 +9,6 @@ pdf2image
 langchain-openai
 langchain-core
 dashscope
+
+passlib[bcrypt]
+python-jose[cryptography]

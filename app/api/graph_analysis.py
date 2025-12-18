@@ -8,6 +8,8 @@ from app.db.session import get_db
 from ..services.graph_analysis import KnowledgeGraphAnalyzer
 from ..crud.graph import get_knowledge_node_by_name
 from ..crud.clazz import is_owned_class
+from app.models.user import User
+from .deps import get_current_active_teacher
 
 def get_analyzer(
         request: Request,
@@ -15,13 +17,14 @@ def get_analyzer(
         start_date: str = Header(..., alias="Start-Date"),
         end_date: str = Header(..., alias="End-Date"),
         db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_active_teacher)
 ) -> KnowledgeGraphAnalyzer:
     try:
         sd = datetime.fromisoformat(start_date)
         ed = datetime.fromisoformat(end_date)
     except ValueError:
         raise HTTPException(status_code=400, detail="日期格式错误，应为 YYYY-MM-DD")
-    if not is_owned_class(db, class_id, 1): # teacher_id暂时写死为1
+    if not is_owned_class(db, class_id, current_user.teacher.id):
         raise HTTPException(403, "班级不存在或无权访问")
     analyzer = KnowledgeGraphAnalyzer(db=db, class_id=class_id, start_date=sd, end_date=ed)
     request.state.analyzer = analyzer
