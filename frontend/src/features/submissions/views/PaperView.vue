@@ -2,14 +2,14 @@
   <div class="page-wrap">
     <div class="toolbar card-soft" style="margin-bottom:12px;">
       <div class="toolbar-left">
-        <h2 class="title-gradient-blue" style="margin:0;">学生作业</h2>
+        <h2 class="title-gradient-blue" style="margin:0;">Student Assignment</h2>
         <div v-if="submitting" style="margin-top:8px; max-width:480px;">
           <div style="margin-bottom:6px; color:#374151; font-weight:500;">{{ submitProgressText }}</div>
           <el-progress :percentage="submitProgress" :status="submitStatus" :text-inside="true" :stroke-width="18" />
         </div>
       </div>
       <div class="toolbar-right" style="color:#6b7280;">
-        共 {{ questions.length }} 题
+        Total {{ questions.length }} questions
         <el-upload
           action=""
           :http-request="splitUpload"
@@ -17,11 +17,11 @@
           multiple
           accept=".jpg,.jpeg,.png"
         >
-          <el-button size="small" class="btn-outline">整页上传（自动切分）</el-button>
+          <el-button size="small" class="btn-outline">Upload Full Page (Auto Split)</el-button>
         </el-upload>
         <input ref="batchInput" type="file" accept=".jpg,.jpeg,.png" multiple style="display:none" @change="handleBatchFiles" />
-        <el-button size="small" class="btn-outline" @click="triggerBatch">整页批量上传（多张）</el-button>
-        <el-button type="primary" size="small" class="btn-ghost" @click="submit" :loading="submitting">提交作业</el-button>
+        <el-button size="small" class="btn-outline" @click="triggerBatch">Upload Multiple Pages</el-button>
+        <el-button type="primary" size="small" class="btn-ghost" @click="submit" :loading="submitting">Submit Assignment</el-button>
       </div>
     </div>
     <div v-if="splitUploading" style="margin:8px 0; max-width:480px;">
@@ -29,11 +29,11 @@
       <el-progress :percentage="splitProgress" :status="splitStatus" :text-inside="true" :stroke-width="16" />
     </div>
     <div class="card-soft" style="margin-bottom:12px; padding:10px; color:#4b5563;">
-      <strong>题号书写规范：</strong>
-      <span>请在纸面用清晰编号标注每题，推荐格式：1. 2. 3. 或 (1)(2)(3)，也可“第1题”。每题内容与题号在同一块区域，题号后建议留空格。</span>
+      <strong>Numbering Guide:</strong>
+      <span>Please mark each question with clear numbers on paper, e.g., 1. 2. 3. or (1)(2)(3). Keep the number and content in the same area; leave a space after the number.</span>
     </div>
-    <div v-if="loading">加载中...</div>
-    <div v-else-if="questions.length===0" style="color:#909399;">您暂无作业</div>
+    <div v-if="loading">Loading...</div>
+    <div v-else-if="questions.length===0" style="color:#909399;">No assignments</div>
     <div v-else class="page-grid">
       <div>
         <div
@@ -43,8 +43,8 @@
           style="margin-bottom:16px; padding:16px;"
         >
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-            <div style="font-weight:600; color:#334155;">第 {{ idx + 1 }} 题</div>
-            <el-tag type="success" size="small">题号 {{ q.id }}</el-tag>
+            <div style="font-weight:600; color:#334155;">Question {{ idx + 1 }}</div>
+            <el-tag type="success" size="small">ID {{ q.id }}</el-tag>
           </div>
           <div style="margin-bottom:12px; white-space:pre-wrap;">
             <LatexText :content="q.question" />
@@ -52,8 +52,8 @@
           <div class="divider-soft"></div>
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
             <el-radio-group v-model="inputMethods[q.id]" size="small">
-              <el-radio-button label="text">输入答案</el-radio-button>
-              <el-radio-button label="image">上传图片</el-radio-button>
+              <el-radio-button label="text">Type Answer</el-radio-button>
+              <el-radio-button label="image">Upload Image</el-radio-button>
             </el-radio-group>
           </div>
           <div v-if="inputMethods[q.id] === 'text'">
@@ -61,7 +61,7 @@
               v-model="answers[q.id]"
               type="textarea"
               :rows="3"
-              placeholder="请输入答案"
+              placeholder="Enter answer"
             />
           </div>
           <div v-else>
@@ -71,60 +71,60 @@
               :show-file-list="false"
               accept=".jpg,.jpeg,.png"
             >
-              <el-button type="primary" size="small">选择图片</el-button>
+              <el-button type="primary" size="small">Choose Image</el-button>
             </el-upload>
             <div v-if="imagePreviews[q.id]" style="margin-top:10px;">
               <img :src="imagePreviews[q.id]" style="max-width:200px; border:1px solid var(--border-soft); padding:4px; border-radius:8px;" />
-              <div style="font-size:12px; color:#666;">已上传</div>
+              <div style="font-size:12px; color:#666;">Uploaded</div>
             </div>
           </div>
         </div>
       </div>
       <div class="aside-sticky">
         <div class="panel">
-          <div class="panel-title">作业概览</div>
+          <div class="panel-title">Assignment Overview</div>
           <div class="panel-list">
             <div class="panel-item">
-              <span>题目数量</span><strong>{{ questions.length }}</strong>
+              <span>Question Count</span><strong>{{ questions.length }}</strong>
             </div>
             <div class="panel-item">
-              <span>已输入答案</span><strong>{{ answeredCount }}</strong>
+              <span>Answers Entered</span><strong>{{ answeredCount }}</strong>
             </div>
           </div>
           <div style="margin-top:12px;">
-            <el-button type="primary" style="width:100%;" @click="submit" :loading="submitting">提交作业</el-button>
+            <el-button type="primary" style="width:100%;" @click="submit" :loading="submitting">Submit Assignment</el-button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <el-dialog v-model="splitDialog" title="整页切分预览" width="720px">
-    <div v-if="splitBlocks.length===0" style="color:#909399;">未识别到题块，请确认题号书写清晰</div>
+  <el-dialog v-model="splitDialog" title="Full Page Split Preview" width="720px">
+    <div v-if="splitBlocks.length===0" style="color:#909399;">No blocks detected. Please ensure numbering is clear.</div>
     <div v-else>
       <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-        <div style="color:#374151; font-weight:600;">识别到 {{ splitBlocks.length }} 个题块</div>
+        <div style="color:#374151; font-weight:600;">Detected {{ splitBlocks.length }} blocks</div>
         <div style="display:flex; gap:8px;">
-          <el-button size="small" class="btn-outline" @click="autoAssign">按题号自动匹配</el-button>
-          <el-button size="small" type="primary" @click="confirmSplit">确认填充到作业</el-button>
+          <el-button size="small" class="btn-outline" @click="autoAssign">Auto Match by Number</el-button>
+          <el-button size="small" type="primary" @click="confirmSplit">Apply to Assignment</el-button>
         </div>
       </div>
       <el-scrollbar height="420px">
         <div style="display:flex; flex-direction:column; gap:16px;">
           <div v-for="(group, gIndex) in groupedByPage" :key="gIndex">
-            <div style="font-weight:600; color:#374151; margin:6px 0;">第 {{ group.page }} 页</div>
+            <div style="font-weight:600; color:#374151; margin:6px 0;">Page {{ group.page }}</div>
             <div style="display:flex; flex-direction:column; gap:10px;">
               <div v-for="(b, i) in group.blocks" :key="`${group.page}-${i}`" class="panel-item" style="align-items:flex-start;">
                 <div style="flex:1;">
-                  <div style="color:#6b7280; margin-bottom:6px;">建议题号：{{ b.question_no ?? '未识别' }}</div>
+                  <div style="color:#6b7280; margin-bottom:6px;">Suggested Number: {{ b.question_no ?? 'N/A' }}</div>
                   <div style="white-space:pre-wrap;"><LatexText :content="b.text" /></div>
                 </div>
                 <div style="width:220px;">
-                  <el-select v-model="splitMap[b.index]" placeholder="选择对应题目" style="width:100%;">
+                  <el-select v-model="splitMap[b.index]" placeholder="Select Question" style="width:100%;">
                     <el-option
                       v-for="(q, idx) in questions"
                       :key="q.id"
-                      :label="`第 ${idx+1} 题`"
+                      :label="`Question ${idx+1}`"
                       :value="q.id"
                     />
                   </el-select>
@@ -136,7 +136,7 @@
       </el-scrollbar>
     </div>
     <template #footer>
-      <el-button @click="splitDialog=false">关闭</el-button>
+      <el-button @click="splitDialog=false">Close</el-button>
     </template>
   </el-dialog>
 </template>
@@ -159,7 +159,7 @@ const loading = ref(false)
 const submitting = ref(false)
 const submitProgress = ref(0)
 const submitStatus = ref<'success'|'exception'|'active'>('active')
-const submitProgressText = ref('准备提交...')
+const submitProgressText = ref('Preparing to submit...')
 const questions = ref<{id: number; question: string}[]>([])
 const answers = ref<Record<number, string>>({})
 const inputMethods = ref<Record<number, 'text' | 'image'>>({})
@@ -199,10 +199,10 @@ onMounted(async () => {
   } catch (e: any) {
     const status = e?.response?.status
     if (status === 404) {
-      ElMessage.info('您暂无作业')
+      ElMessage.info('No assignments')
       questions.value = []
     } else {
-      ElMessage.error('加载作业失败')
+      ElMessage.error('Failed to load assignment')
     }
   } finally {
     loading.value = false
@@ -218,11 +218,11 @@ async function handleImageUpload(options: any, qid: number) {
         const res = await uploadSubmissionImage(options.file)
         // Store a special marker for image path
         answers.value[qid] = `[IMAGE]${res.path}`
-        imagePreviews.value[qid] = `${import.meta.env.VITE_API_BASE_URL || ''}${res.url}`
-        ElMessage.success('图片上传成功')
+    imagePreviews.value[qid] = `${import.meta.env.VITE_API_BASE_URL || ''}${res.url}`
+        ElMessage.success('Image uploaded')
         computeAnswered()
     } catch(e) {
-        ElMessage.error('上传失败')
+        ElMessage.error('Upload failed')
     }
 }
 
@@ -231,7 +231,7 @@ async function splitUpload(options: any) {
     splitUploading.value = true
     splitProgress.value = 8
     splitStatus.value = 'active'
-    splitProgressText.value = '正在上传...'
+    splitProgressText.value = 'Uploading...'
     const timer = setInterval(() => {
       if (splitProgress.value < 90) splitProgress.value += splitProgress.value < 50 ? 6 : 3
     }, 400)
@@ -244,11 +244,11 @@ async function splitUpload(options: any) {
     clearInterval(timer)
     splitProgress.value = splitBlocks.value.length > 0 ? 100 : 95
     splitStatus.value = splitBlocks.value.length > 0 ? 'success' : 'exception'
-    splitProgressText.value = splitBlocks.value.length > 0 ? '切分完成' : '未识别到题块'
+    splitProgressText.value = splitBlocks.value.length > 0 ? 'Split completed' : 'No blocks detected'
   } catch (e) {
-    ElMessage.error('整页切分失败')
+    ElMessage.error('Full-page split failed')
     splitStatus.value = 'exception'
-    splitProgressText.value = '切分失败'
+    splitProgressText.value = 'Split failed'
   }
   finally {
     setTimeout(() => { splitUploading.value = false }, 500)
@@ -264,7 +264,7 @@ async function handleBatchFiles(e: Event) {
   splitUploading.value = true
   splitProgress.value = 6
   splitStatus.value = 'active'
-  splitProgressText.value = '正在上传并切分多页...'
+  splitProgressText.value = 'Uploading and splitting multiple pages...'
   const files = Array.from(input.files)
   const timer = setInterval(() => {
     if (splitProgress.value < 90) splitProgress.value += splitProgress.value < 50 ? 5 : 3
@@ -279,11 +279,11 @@ async function handleBatchFiles(e: Event) {
     splitDialog.value = true
     splitProgress.value = 100
     splitStatus.value = 'success'
-    splitProgressText.value = '切分完成'
+    splitProgressText.value = 'Split completed'
   } catch (_) {
     splitStatus.value = 'exception'
-    splitProgressText.value = '切分失败'
-    ElMessage.error('多页切分失败')
+    splitProgressText.value = 'Split failed'
+    ElMessage.error('Multi-page split failed')
   } finally {
     clearInterval(timer)
     setTimeout(() => { splitUploading.value = false }, 600)
@@ -325,7 +325,7 @@ function confirmSplit() {
   }
   computeAnswered()
   splitDialog.value = false
-  ElMessage.success(`已填充 ${applied} 个题块`)
+  ElMessage.success(`Applied ${applied} blocks`)
   if (Object.keys(styleCache).length > 0) {
     localStorage.setItem(NUMBER_STYLE_CACHE_KEY, JSON.stringify(styleCache))
   }
@@ -335,7 +335,7 @@ async function submit() {
   submitting.value = true
   submitProgress.value = 10
   submitStatus.value = 'active'
-  submitProgressText.value = '正在提交答案...'
+  submitProgressText.value = 'Submitting answers...'
   const timer = setInterval(() => {
     if (submitProgress.value < 90) {
       submitProgress.value += submitProgress.value < 50 ? 6 : 3
@@ -351,8 +351,8 @@ async function submit() {
       }))
     }
     await submitAssignment(payload)
-    ElMessage.success('作业已提交，正在批改...')
-    submitProgressText.value = '正在批改...'
+    ElMessage.success('Assignment submitted, grading in progress...')
+    submitProgressText.value = 'Grading...'
 
     // 现实友好：轮询结果到达后再跳转（最多等待 10 秒）
     const start = Date.now()
@@ -363,7 +363,7 @@ async function submit() {
           clearInterval(timer)
           submitProgress.value = 100
           submitStatus.value = 'success'
-          submitProgressText.value = '批改完成'
+          submitProgressText.value = 'Grading completed'
           router.push(`/results/${assignmentId}`)
           return
         }
@@ -375,14 +375,14 @@ async function submit() {
         clearInterval(timer)
         submitProgress.value = 95
         submitStatus.value = 'active'
-        submitProgressText.value = '批改耗时较长，正在跳转结果页...'
+        submitProgressText.value = 'Grading takes longer, redirecting to results...'
         router.push(`/results/${assignmentId}`)
       }
     }
     poll()
     
   } catch (e) {
-    ElMessage.error('提交失败')
+    ElMessage.error('Submission failed')
   } finally {
     submitting.value = false
   }
@@ -394,9 +394,9 @@ onBeforeRouteLeave((to, from, next) => {
   // submitStatus === 'success' means we are redirecting after submission
   if (answeredCount.value > 0 && !submitting.value && submitStatus.value !== 'success') {
     ElMessageBox.confirm(
-      '您有未提交的作业内容，离开后可能丢失进度。是否确认离开？',
-      '提示',
-      { confirmButtonText: '离开', cancelButtonText: '取消', type: 'warning' }
+      'You have unsaved answers. Leaving may lose progress. Confirm to leave?',
+      'Notice',
+      { confirmButtonText: 'Leave', cancelButtonText: 'Cancel', type: 'warning' }
     ).then(() => {
       next()
     }).catch(() => {

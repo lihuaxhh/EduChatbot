@@ -1,7 +1,7 @@
 <template>
   <div style="padding:16px;">
     <el-upload action="" :http-request="customRequest" accept=".png,.jpg,.jpeg">
-      <el-button type="primary">上传答题图片</el-button>
+      <el-button type="primary">Upload Answer Image</el-button>
     </el-upload>
     <div style="margin-top:12px; white-space:pre-wrap;">{{ text }}</div>
   </div>

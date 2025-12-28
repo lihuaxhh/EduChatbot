@@ -2,34 +2,34 @@
   <div class="page-wrap">
     <div class="toolbar card-soft" style="margin-bottom:12px;">
       <div class="toolbar-left">
-        <h2 class="title-gradient-blue" style="margin:0;">我的作业</h2>
-        <span style="margin-left:8px; color:#606266;">请按时完成以下作业</span>
+        <h2 class="title-gradient-blue" style="margin:0;">My Assignments</h2>
+        <span style="margin-left:8px; color:#606266;">Please complete the following assignments on time</span>
       </div>
     </div>
     
-    <div v-if="loading" class="loading">加载中...</div>
+    <div v-if="loading" class="loading">Loading...</div>
     <div v-else-if="pendingAssignments.length === 0" class="empty">
-        <el-empty description="太棒了，目前没有未完成的作业" />
+        <el-empty description="Great! No pending assignments" />
     </div>
     
     <div v-else class="grid">
         <div v-for="item in pendingAssignments" :key="item.id" class="assignment-card soft-hover" @click="goDetail(item.id)">
             <div class="card-header">
-                <h3>{{ item.title || `作业 #${item.id}` }}</h3>
+                <h3>{{ item.title || `Assignment #${item.id}` }}</h3>
                 <el-tag size="small" :type="isOverdue(item.deadline) ? 'danger' : 'primary'">
-                    {{ isOverdue(item.deadline) ? '已截止' : '进行中' }}
+                    {{ isOverdue(item.deadline) ? 'Closed' : 'Ongoing' }}
                 </el-tag>
             </div>
             <div class="card-body">
-                <p>发布时间: {{ formatDate(item.created_at) }}</p>
+                <p>Published: {{ formatDate(item.created_at) }}</p>
                 <p v-if="item.deadline" :style="{ color: isOverdue(item.deadline) ? 'red' : '' }">
-                    截止时间: {{ formatDate(item.deadline) }}
+                    Deadline: {{ formatDate(item.deadline) }}
                 </p>
-                <p>题目数量: {{ item.assigned_question_ids ? item.assigned_question_ids.length : 0 }}</p>
+                <p>Question Count: {{ item.assigned_question_ids ? item.assigned_question_ids.length : 0 }}</p>
             </div>
             <div class="card-footer">
                 <el-button type="primary" size="small" @click.stop="goDetail(item.id)">
-                    开始答题 <el-icon class="el-icon--right"><ArrowRight /></el-icon>
+                    Start Answering <el-icon class="el-icon--right"><ArrowRight /></el-icon>
                 </el-button>
             </div>
         </div>
@@ -66,7 +66,7 @@ function goDetail(id: number) {
 }
 
 function formatDate(dateStr: string) {
-    if (!dateStr) return '无'
+    if (!dateStr) return 'N/A'
     return dayjs(dateStr).format('YYYY-MM-DD HH:mm')
 }
 

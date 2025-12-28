@@ -1,22 +1,22 @@
 <template>
   <div class="teacher-dashboard">
-    <div v-if="loading" class="loading">加载统计数据中...</div>
-    <div v-else-if="!stats" class="empty">暂无数据</div>
+    <div v-if="loading" class="loading">Loading statistics...</div>
+    <div v-else-if="!stats" class="empty">No data</div>
     <div v-else>
       <!-- Overview Cards -->
       <div class="stats-overview">
         <el-card class="stat-card">
-            <template #header>平均正确率</template>
+            <template #header>Average Accuracy</template>
             <div class="stat-value">{{ stats.overall.average_accuracy }}%</div>
-            <div class="stat-desc">共 {{ stats.overall.total_submissions }} 份提交</div>
+            <div class="stat-desc">{{ stats.overall.total_submissions }} submissions</div>
         </el-card>
         <el-card class="stat-card">
-            <template #header>参与学生</template>
+            <template #header>Participating Students</template>
             <div class="stat-value">{{ stats.overall.student_count }}</div>
-            <div class="stat-desc">人</div>
+            <div class="stat-desc">people</div>
         </el-card>
         <el-card class="stat-card" v-if="stats.weak_points.length > 0">
-            <template #header>主要薄弱点</template>
+            <template #header>Key Weak Points</template>
             <div class="weak-tags">
                 <el-tag v-for="wp in stats.weak_points" :key="wp.tag" type="danger" effect="plain">
                     {{ wp.tag }} ({{ wp.count }})
@@ -28,11 +28,11 @@
       <!-- Charts -->
       <div class="charts-row">
           <el-card class="chart-card">
-              <template #header>题目正确率分布</template>
+              <template #header>Question Accuracy</template>
               <div ref="questionChartRef" style="height: 300px;"></div>
           </el-card>
           <el-card class="chart-card">
-              <template #header>错误类型分布</template>
+              <template #header>Error Type Distribution</template>
               <div ref="errorChartRef" style="height: 300px;"></div>
           </el-card>
       </div>
@@ -41,25 +41,25 @@
       <el-card class="student-list-card">
           <template #header>
               <div class="card-header">
-                  <span>学生作答详情</span>
+                  <span>Student Answers</span>
               </div>
           </template>
           <el-table :data="stats.students" stripe style="width: 100%">
-              <el-table-column prop="name" label="姓名" width="180" />
-              <el-table-column label="正确率" width="250">
+              <el-table-column prop="name" label="Name" width="180" />
+              <el-table-column label="Accuracy" width="250">
                   <template #default="scope">
                       <el-progress :percentage="scope.row.accuracy" :status="getProgressStatus(scope.row.accuracy)" />
                   </template>
               </el-table-column>
-              <el-table-column label="正确/总数">
+              <el-table-column label="Correct / Total">
                   <template #default="scope">
                       {{ scope.row.correct }} / {{ scope.row.total }}
                   </template>
               </el-table-column>
-              <el-table-column label="操作" width="120">
+              <el-table-column label="Action" width="120">
                   <template #default="scope">
                       <el-button size="small" type="primary" @click="viewStudent(scope.row.id)">
-                          查看详情
+                          View Details
                       </el-button>
                   </template>
               </el-table-column>
@@ -99,7 +99,7 @@ async function fetchStats() {
         stats.value = await getAssignmentStats(props.assignmentId)
         setTimeout(() => initCharts(), 100)
     } catch (e) {
-        ElMessage.error('获取统计数据失败')
+        ElMessage.error('Failed to fetch statistics')
     } finally {
         loading.value = false
     }

@@ -2,32 +2,32 @@
   <div style="padding:20px; height:100%; display:flex; flex-direction:column; gap:16px;">
     <div class="card-soft" style="padding:16px; display:flex; justify-content:space-between; align-items:flex-end;">
       <div>
-        <h2 class="title-gradient-violet" style="margin:0 0 12px 0;">题库选题</h2>
+        <h2 class="title-gradient-violet" style="margin:0 0 12px 0;">Problem Selection</h2>
         <div style="display:flex; gap:12px; align-items:center;">
-          <el-select v-model="filter.difficulty" placeholder="难度" clearable style="width:120px" @change="handleFilter">
-            <el-option label="容易" value="易" />
-            <el-option label="中等" value="中" />
-            <el-option label="困难" value="难" />
+          <el-select v-model="filter.difficulty" placeholder="Difficulty" clearable style="width:120px" @change="handleFilter">
+            <el-option label="Easy" value="易" />
+            <el-option label="Medium" value="中" />
+            <el-option label="Hard" value="难" />
           </el-select>
-          <el-input v-model="filter.knowledge" placeholder="搜索知识点..." clearable style="width:200px" @keyup.enter="handleFilter" />
-          <el-button type="primary" class="ripple" @click="handleFilter">搜索</el-button>
-          <el-button class="ripple" @click="clearFilter">清空</el-button>
-          <el-tag v-if="store.total" type="success">共 {{ store.total }} 题</el-tag>
+          <el-input v-model="filter.knowledge" placeholder="Search knowledge..." clearable style="width:200px" @keyup.enter="handleFilter" />
+          <el-button type="primary" class="ripple" @click="handleFilter">Search</el-button>
+          <el-button class="ripple" @click="clearFilter">Clear</el-button>
+          <el-tag v-if="store.total" type="success">{{ store.total }} items</el-tag>
         </div>
       </div>
 
       <div style="display:flex; gap:12px;">
         <el-button type="success" class="ripple" @click="openDialog" :disabled="!store.selectedQuestions.length">
-          创建作业 ({{ store.selectedQuestions.length }})
+          Create Assignment ({{ store.selectedQuestions.length }})
         </el-button>
         <el-upload 
            action="" 
            :http-request="customRequest" 
            :show-file-list="false" 
            accept=".csv,.xlsx,.xls,.json">
-           <el-button class="ripple">导入题目</el-button>
+           <el-button class="ripple">Import Questions</el-button>
         </el-upload>
-        <el-button class="btn-outline" @click="openAssignUpload">上传文档创建作业</el-button>
+        <el-button class="btn-outline" @click="openAssignUpload">Upload Document to Create Assignment</el-button>
       </div>
     </div>
 
@@ -39,13 +39,13 @@
       style="width: 100%; flex:1;" class="card-soft">
       <el-table-column type="selection" width="55" />
       <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column label="题干" min-width="300">
+      <el-table-column label="Stem" min-width="300">
         <template #default="{ row }">
             <LatexText :content="row.question" />
         </template>
       </el-table-column>
-      <el-table-column prop="difficulty_tag" label="难度" width="100" />
-      <el-table-column prop="knowledge_tag" label="知识点" width="200" />
+      <el-table-column prop="difficulty_tag" label="Difficulty" width="100" />
+      <el-table-column prop="knowledge_tag" label="Knowledge" width="200" />
     </el-table>
 
     <div style="margin-top:12px; display:flex; justify-content:flex-end;">
@@ -60,19 +60,19 @@
       />
     </div>
 
-    <el-dialog v-model="dialogVisible" title="布置作业" width="500px">
+    <el-dialog v-model="dialogVisible" title="Assign Homework" width="500px">
       <el-form :model="form" label-width="100px">
-        <el-form-item label="作业标题">
-          <el-input v-model="form.title" placeholder="如：第一章课后作业" />
+        <el-form-item label="Title">
+          <el-input v-model="form.title" placeholder="e.g., Chapter 1 Homework" />
         </el-form-item>
-        <el-form-item label="班级 ID">
+        <el-form-item label="Class ID">
           <el-input-number v-model="form.class_id" :min="1" />
         </el-form-item>
-        <el-form-item label="截止时间">
+        <el-form-item label="Deadline">
           <el-date-picker 
             v-model="form.deadline" 
             type="datetime" 
-            placeholder="选择截止时间" 
+            placeholder="Pick a deadline" 
             value-format="YYYY-MM-DDTHH:mm:ss" 
             style="width: 100%;"
           />
@@ -80,17 +80,17 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false">Cancel</el-button>
           <el-button type="primary" :loading="store.loading" @click="submitAssignment">
-            确定布置
+            Confirm
           </el-button>
         </span>
       </template>
     </el-dialog>
     
-    <el-dialog v-model="uploadDialog" title="上传文档并创建作业" width="520px">
+    <el-dialog v-model="uploadDialog" title="Upload Document and Create Assignment" width="520px">
       <el-form label-width="110px">
-        <el-form-item label="文件">
+        <el-form-item label="File">
           <el-upload
             action=""
             :auto-upload="false"
@@ -98,18 +98,18 @@
             :on-change="handleUploadFileChange"
             accept=".png,.jpg,.jpeg,.pdf,.docx"
           >
-            <el-button type="primary">选择文件</el-button>
+            <el-button type="primary">Choose File</el-button>
           </el-upload>
-          <div style="margin-left:12px; color:#6b7280;">自动解析题目并查重后生成作业</div>
+          <div style="margin-left:12px; color:#6b7280;">Automatically parse questions and deduplicate to generate assignment</div>
         </el-form-item>
-        <el-form-item label="标题">
-          <el-input v-model="uploadForm.title" placeholder="如：Chapter 1 作业" />
+        <el-form-item label="Title">
+          <el-input v-model="uploadForm.title" placeholder="e.g., Chapter 1 Homework" />
         </el-form-item>
-        <el-form-item label="班级 ID">
+        <el-form-item label="Class ID">
           <el-input-number v-model="uploadForm.class_id" :min="1" />
         </el-form-item>
-        <el-form-item label="截止时间">
-          <el-date-picker v-model="uploadForm.deadline" type="datetime" placeholder="选择时间" />
+        <el-form-item label="Deadline">
+          <el-date-picker v-model="uploadForm.deadline" type="datetime" placeholder="Pick a time" />
         </el-form-item>
         <div v-if="creating" style="margin-top:8px;">
           <div style="margin-bottom:6px; color:#374151; font-weight:500;">{{ progressText }}</div>
@@ -117,8 +117,8 @@
         </div>
       </el-form>
       <template #footer>
-        <el-button @click="uploadDialog=false" :disabled="creating">关闭</el-button>
-        <el-button type="primary" @click="doCreateAssignment" :loading="creating">创建作业</el-button>
+        <el-button @click="uploadDialog=false" :disabled="creating">Close</el-button>
+        <el-button type="primary" @click="doCreateAssignment" :loading="creating">Create Assignment</el-button>
       </template>
     </el-dialog>
   </div>

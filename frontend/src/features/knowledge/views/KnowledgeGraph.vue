@@ -2,73 +2,73 @@
   <div class="page-wrap">
     <div class="toolbar card-soft">
       <div class="toolbar-left">
-        <h2 class="title-gradient-teal" style="margin:0;">数据分析</h2>
+        <h2 class="title-gradient-teal" style="margin:0;">Analytics</h2>
       </div>
       <div class="toolbar-right controls">
-        <el-select v-model="classId" placeholder="选择班级" style="width:180px" @change="refreshAll">
+        <el-select v-model="classId" placeholder="Select Class" style="width:180px" @change="refreshAll">
           <el-option v-for="c in classes" :key="c.id" :label="c.name" :value="c.id" />
         </el-select>
         <el-date-picker
           v-model="dateRange"
           type="daterange"
           value-format="YYYY-MM-DD"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
+          range-separator="to"
+          start-placeholder="Start date"
+          end-placeholder="End date"
           style="width:280px"
           @change="refreshAll"
         />
         <el-autocomplete
           v-model="center"
           :fetch-suggestions="querySearch"
-          placeholder="搜索中心知识点"
+          placeholder="Search center concept"
           style="width:280px"
           @select="onCenterSelect"
         />
-        <el-button type="primary" class="ripple" @click="loadGraph">加载图谱</el-button>
-        <el-button class="ripple" @click="resetView">重置视图</el-button>
+        <el-button type="primary" class="ripple" @click="loadGraph">Load Graph</el-button>
+        <el-button class="ripple" @click="resetView">Reset View</el-button>
       </div>
     </div>
 
     <div class="grid">
       <el-card class="card-soft" shadow="always">
-        <template #header>知识图谱</template>
+        <template #header>Knowledge Graph</template>
         <div ref="graphRef" class="graph-canvas"></div>
       </el-card>
 
       <div class="side">
         <el-card class="card-soft" shadow="hover">
-          <template #header>异常错误增长点</template>
-          <div v-if="loadingBreakpoints" class="loading">加载中...</div>
-          <div v-else-if="breakpoints.length===0" class="empty">暂无数据</div>
+          <template #header>Error Spike Points</template>
+          <div v-if="loadingBreakpoints" class="loading">Loading...</div>
+          <div v-else-if="breakpoints.length===0" class="empty">No data</div>
           <div v-else class="list">
             <div v-for="bp in breakpoints" :key="bp.name" class="item">
               <div class="info">
                 <span class="name">{{ bp.name }}</span>
-                <el-tag type="danger" size="small">差值 {{ bp.diff }}</el-tag>
+                <el-tag type="danger" size="small">Diff {{ bp.diff }}</el-tag>
               </div>
               <div class="ops">
-                <el-button size="small" type="primary" @click="setCenter(bp.name)">设为中心</el-button>
-                <el-button size="small" @click="openNode(bp.name)">查看</el-button>
+                <el-button size="small" type="primary" @click="setCenter(bp.name)">Set as Center</el-button>
+                <el-button size="small" @click="openNode(bp.name)">View</el-button>
               </div>
             </div>
           </div>
         </el-card>
         <el-card class="card-soft" shadow="hover" style="margin-top:12px;">
-          <template #header>候选中心知识点</template>
+          <template #header>Candidate Center Concepts</template>
           <div style="display:flex; gap:8px; margin-bottom:8px;">
-            <el-input v-model="filter" placeholder="过滤关键字" clearable @input="applyFilter" />
-            <el-button size="small" class="ripple" @click="reloadAllNodes">刷新</el-button>
+            <el-input v-model="filter" placeholder="Filter keywords" clearable @input="applyFilter" />
+            <el-button size="small" class="ripple" @click="reloadAllNodes">Refresh</el-button>
           </div>
-          <div v-if="loadingAll" class="loading">加载中...</div>
-          <div v-else-if="filtered.length===0" class="empty">暂无候选</div>
+          <div v-if="loadingAll" class="loading">Loading...</div>
+          <div v-else-if="filtered.length===0" class="empty">No candidates</div>
           <el-scrollbar v-else height="280px">
             <div class="cand-list">
               <div v-for="n in filtered" :key="n" class="cand-item">
                 <span>{{ n }}</span>
                 <div>
-                  <el-button size="small" type="primary" @click="setCenter(n)">设为中心</el-button>
-                  <el-button size="small" @click="openNode(n)">查看</el-button>
+                  <el-button size="small" type="primary" @click="setCenter(n)">Set as Center</el-button>
+                  <el-button size="small" @click="openNode(n)">View</el-button>
                 </div>
               </div>
             </div>
@@ -78,23 +78,23 @@
     </div>
 
     <el-drawer v-model="detailVisible" :title="detail?.node.name" size="40%">
-      <div v-if="loadingDetail">加载中...</div>
-      <div v-else-if="!detail">暂无数据</div>
+      <div v-if="loadingDetail">Loading...</div>
+      <div v-else-if="!detail">No data</div>
       <div v-else class="drawer-body">
         <div class="meta">
-          <el-tag type="warning">最长前置路径 {{ detail.node.longest_path }}</el-tag>
-          <el-tag type="danger">总错误 {{ detail.node.total_errors }}</el-tag>
+          <el-tag type="warning">Longest prerequisite path {{ detail.node.longest_path }}</el-tag>
+          <el-tag type="danger">Total errors {{ detail.node.total_errors }}</el-tag>
         </div>
         <div class="content">
-          <div class="title">知识点内容</div>
+          <div class="title">Concept Content</div>
           <LatexText :content="detail.node.content" class="text" />
         </div>
         <div class="chart">
-          <div class="title">每日错误趋势</div>
+          <div class="title">Daily Error Trend</div>
           <div ref="chartRef" style="height:260px;"></div>
         </div>
         <div class="preceding">
-          <div class="title">高频前置节点</div>
+          <div class="title">Frequent Preceding Nodes</div>
           <div class="tags">
             <el-tag v-for="p in detail.preceding_nodes" :key="p.name" effect="plain" type="info" style="margin-right:8px; margin-bottom:8px;">
               {{ p.name }} / {{ p.total_errors }}
@@ -161,7 +161,7 @@ async function loadClasses() {
     const first = list[0]
     if (first && !classId.value) classId.value = first.id
   } catch {
-    ElMessage.error('获取班级失败')
+    ElMessage.error('Failed to load classes')
   }
 }
 
@@ -215,7 +215,7 @@ function resetView() {
 
 async function loadGraph() {
   if (!center.value) {
-    ElMessage.warning('请输入中心知识点')
+    ElMessage.warning('Please enter center concept')
     return
   }
   try {
@@ -243,13 +243,13 @@ async function loadGraph() {
     graph.render()
     graph.fitView()
   } catch {
-    ElMessage.error('加载图谱失败')
+    ElMessage.error('Failed to load graph')
   }
 }
 
 async function openNode(name: string) {
   if (!classId.value || !dateRange.value) {
-    ElMessage.warning('请选择班级与时间范围')
+    ElMessage.warning('Please select class and date range')
     return
   }
   detailVisible.value = true
@@ -270,7 +270,7 @@ async function openNode(name: string) {
       })
     }
   } catch {
-    ElMessage.error('加载节点详情失败')
+    ElMessage.error('Failed to load node details')
   } finally {
     loadingDetail.value = false
   }
@@ -288,7 +288,7 @@ async function reloadAllNodes() {
     }
     applyFilter()
   } catch {
-    ElMessage.error('加载候选知识点失败')
+    ElMessage.error('Failed to load candidate concepts')
   } finally {
     loadingAll.value = false
   }

@@ -13,14 +13,14 @@
           <div class="logo-area">
             <h1 class="brand-title">EduChatbot</h1>
           </div>
-          <h2 class="welcome-title">加入我们<br>共创未来</h2>
+          <h2 class="welcome-title">Join Us<br>Create the Future</h2>
           <p class="brand-desc">
-            注册账号，立即体验智能辅助教学与个性化学习推荐系统。我们致力于通过技术创新，让每一次学习都更高效，让每一位师生都能享受科技带来的便利。
+            Create an account to experience AI-assisted teaching and personalized learning recommendations. We aim to make every learning session more efficient through technology.
           </p>
           
           <div class="quote-box">
-            <p class="quote-text">"教育的本质意味着：一棵树摇动另一棵树，一朵云推动另一朵云，一个灵魂唤醒另一个灵魂。"</p>
-            <p class="quote-author">— 雅斯贝尔斯</p>
+            <p class="quote-text">"Education is the kindling of a flame, not the filling of a vessel."</p>
+            <p class="quote-author">— Socrates</p>
           </div>
         </div>
         <div class="panel-bg-overlay"></div>
@@ -30,8 +30,8 @@
       <div class="right-panel">
         <div class="form-container">
           <div class="form-header">
-            <h3>创建账号</h3>
-            <p class="subtitle">请填写以下信息完成注册</p>
+            <h3>Create Account</h3>
+            <p class="subtitle">Fill in the information to register</p>
           </div>
           
           <el-form ref="formRef" :model="form" :rules="rules" class="auth-form" size="large">
@@ -42,14 +42,14 @@
                 :class="{ active: form.role === 'student' }"
                 @click="form.role = 'student'"
               >
-                <el-icon><User /></el-icon> 我是学生
+                <el-icon><User /></el-icon> I am a student
               </div>
               <div 
                 class="role-btn" 
                 :class="{ active: form.role === 'teacher' }"
                 @click="form.role = 'teacher'"
               >
-                <el-icon><School /></el-icon> 我是教师
+                <el-icon><School /></el-icon> I am a teacher
               </div>
             </div>
 
@@ -57,7 +57,7 @@
               <el-form-item prop="name">
                 <el-input 
                   v-model="form.name" 
-                  placeholder="姓名" 
+                  placeholder="Name" 
                   prefix-icon="UserFilled"
                   class="custom-input"
                 />
@@ -66,7 +66,7 @@
               <el-form-item prop="username">
                 <el-input 
                   v-model="form.username" 
-                  placeholder="用户名" 
+                  placeholder="Username" 
                   prefix-icon="User"
                   class="custom-input"
                 />
@@ -77,7 +77,7 @@
               <el-input 
                 v-model="form.password" 
                 type="password" 
-                placeholder="设置密码" 
+                  placeholder="Password" 
                 show-password 
                 prefix-icon="Lock"
                 class="custom-input"
@@ -89,7 +89,7 @@
                 <el-form-item prop="student_number">
                   <el-input 
                     v-model="form.student_number" 
-                    placeholder="学号 (选填)" 
+                    placeholder="Student Number (optional)" 
                     prefix-icon="CreditCard"
                     class="custom-input"
                   />
@@ -97,7 +97,7 @@
                 <el-form-item prop="class_id">
                   <el-input 
                     v-model.number="form.class_id" 
-                    placeholder="班级ID (选填)" 
+                    placeholder="Class ID (optional)" 
                     prefix-icon="Collection"
                     class="custom-input"
                   />
@@ -107,13 +107,13 @@
 
             <div class="form-actions">
               <el-button type="primary" class="submit-btn" :loading="loading" @click="handleRegister">
-                立即注册
+                Register
               </el-button>
             </div>
             
             <div class="form-footer">
-              <span>已有账号？</span>
-              <router-link to="/login" class="link-text">直接登录</router-link>
+              <span>Already have an account?</span>
+              <router-link to="/login" class="link-text">Sign In</router-link>
             </div>
           </el-form>
         </div>
@@ -143,9 +143,9 @@ const form = reactive({
 })
 
 const rules = {
-  name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  name: [{ required: true, message: 'Please enter name', trigger: 'blur' }],
+  username: [{ required: true, message: 'Please enter username', trigger: 'blur' }],
+  password: [{ required: true, message: 'Please enter password', trigger: 'blur' }]
 }
 
 async function handleRegister() {
@@ -155,10 +155,10 @@ async function handleRegister() {
       loading.value = true
       try {
         await authStore.register(form)
-        ElMessage.success('注册成功，请登录')
+        ElMessage.success('Registered successfully. Please sign in.')
         router.push('/login')
       } catch (e: any) {
-        ElMessage.error(e.response?.data?.detail || '注册失败')
+        ElMessage.error(e.response?.data?.detail || 'Registration failed')
       } finally {
         loading.value = false
       }

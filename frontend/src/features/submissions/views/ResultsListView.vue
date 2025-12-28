@@ -2,29 +2,29 @@
   <div class="page-wrap">
     <div class="toolbar card-soft" style="margin-bottom:12px;">
       <div class="toolbar-left">
-        <h2 class="title-gradient-blue" style="margin:0;">作业列表</h2>
-        <span style="margin-left:8px; color:#606266;">选择作业查看结果</span>
+        <h2 class="title-gradient-blue" style="margin:0;">Assignments</h2>
+        <span style="margin-left:8px; color:#606266;">Select an assignment to view results</span>
       </div>
     </div>
     
-    <div v-if="loading" class="loading">加载中...</div>
-    <div v-else-if="assignments.length === 0" class="empty">暂无作业</div>
+    <div v-if="loading" class="loading">Loading...</div>
+    <div v-else-if="assignments.length === 0" class="empty">No assignments</div>
     
     <div v-else class="grid">
         <div v-for="item in assignments" :key="item.id" class="assignment-card soft-hover" @click="goDetail(item.id)">
             <div class="card-header">
-                <h3>{{ item.title || `作业 #${item.id}` }}</h3>
+                <h3>{{ item.title || `Assignment #${item.id}` }}</h3>
                 <el-tag size="small" :type="item.deadline ? 'warning' : 'info'">
-                    {{ item.deadline ? '有截止日期' : '无截止日期' }}
+                    {{ item.deadline ? 'Has deadline' : 'No deadline' }}
                 </el-tag>
             </div>
             <div class="card-body">
-                <p>发布时间: {{ formatDate(item.created_at) }}</p>
-                <p v-if="item.deadline">截止时间: {{ formatDate(item.deadline) }}</p>
+                <p>Published: {{ formatDate(item.created_at) }}</p>
+                <p v-if="item.deadline">Deadline: {{ formatDate(item.deadline) }}</p>
             </div>
             <div class="card-footer">
                 <el-button type="primary" size="small" @click.stop="goDetail(item.id)">
-                    查看结果 <el-icon class="el-icon--right"><ArrowRight /></el-icon>
+                    View Results <el-icon class="el-icon--right"><ArrowRight /></el-icon>
                 </el-button>
             </div>
         </div>

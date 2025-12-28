@@ -2,8 +2,8 @@
   <div class="profile-container">
     <div class="glass-card">
       <div class="header">
-        <h2>个人资料</h2>
-        <p>管理您的个人信息</p>
+        <h2>Profile</h2>
+        <p>Manage your personal information</p>
       </div>
 
       <div class="profile-content" v-if="form">
@@ -17,56 +17,56 @@
                 :http-request="handleUpload"
                 :before-upload="beforeUpload"
               >
-                <el-button type="primary" size="small">更换头像</el-button>
+                <el-button type="primary" size="small">Change Avatar</el-button>
               </el-upload>
           </div>
         </div>
 
         <el-form :model="form" label-position="top" class="profile-form" size="large">
           <div class="form-grid">
-            <el-form-item label="昵称">
-              <el-input v-model="form.nickname" placeholder="设置您的昵称" />
+            <el-form-item label="Nickname">
+              <el-input v-model="form.nickname" placeholder="Set your nickname" />
             </el-form-item>
             
-            <el-form-item label="真实姓名 (不可修改)">
+            <el-form-item label="Real Name (read-only)">
                <el-input v-model="form.name" disabled />
             </el-form-item>
 
-            <el-form-item label="用户名 (不可修改)">
+            <el-form-item label="Username (read-only)">
                <el-input v-model="form.username" disabled />
             </el-form-item>
             
-            <el-form-item label="角色">
+            <el-form-item label="Role">
                <el-tag :type="form.role === 'admin' ? 'danger' : 'primary'">{{ form.role }}</el-tag>
             </el-form-item>
 
-            <el-form-item label="班级" v-if="form.role === 'student' && form.className">
+            <el-form-item label="Class" v-if="form.role === 'student' && form.className">
                <el-input v-model="form.className" disabled />
             </el-form-item>
 
-            <el-form-item label="班主任/老师" v-if="form.role === 'student' && form.teacherName">
+            <el-form-item label="Class Teacher" v-if="form.role === 'student' && form.teacherName">
                <el-input v-model="form.teacherName" disabled />
             </el-form-item>
 
-             <el-form-item label="负责班级" v-if="form.role === 'teacher' && form.classes && form.classes.length">
+             <el-form-item label="Managed Classes" v-if="form.role === 'teacher' && form.classes && form.classes.length">
                <el-tag v-for="c in form.classes" :key="c" style="margin-right:8px;">{{ c }}</el-tag>
             </el-form-item>
 
-            <el-form-item label="手机号">
-              <el-input v-model="form.phone" placeholder="绑定手机号" />
+            <el-form-item label="Phone">
+              <el-input v-model="form.phone" placeholder="Bind phone number" />
             </el-form-item>
 
-            <el-form-item label="邮箱">
-              <el-input v-model="form.email" placeholder="绑定邮箱" />
+            <el-form-item label="Email">
+              <el-input v-model="form.email" placeholder="Bind email" />
             </el-form-item>
           </div>
 
           <div class="actions">
             <el-button type="danger" plain @click="handleLogout" class="save-btn" style="margin-right: 12px;">
-               退出登录
+               Log Out
             </el-button>
             <el-button type="primary" @click="saveProfile" :loading="loading" class="save-btn">
-              保存修改
+              Save Changes
             </el-button>
           </div>
         </el-form>
@@ -153,9 +153,9 @@ async function saveProfile() {
         email: form.email,
         avatar: form.avatar
     })
-    ElMessage.success('个人资料已更新')
+    ElMessage.success('Profile updated')
   } catch (e: any) {
-    ElMessage.error(e.response?.data?.detail || '更新失败')
+    ElMessage.error(e.response?.data?.detail || 'Update failed')
   } finally {
     loading.value = false
   }
@@ -163,7 +163,7 @@ async function saveProfile() {
 
 function handleLogout() {
   authStore.logout()
-  ElMessage.success('已退出登录')
+  ElMessage.success('Logged out')
 }
 </script>
 

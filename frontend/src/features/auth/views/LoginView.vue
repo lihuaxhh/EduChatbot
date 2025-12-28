@@ -14,22 +14,22 @@
             <h1 class="brand-title">EduChatbot</h1>
             <div class="brand-badge">AI Powered</div>
           </div>
-          <h2 class="welcome-title">开启智能教育<br>新纪元</h2>
+          <h2 class="welcome-title">Unlock the New Era<br>of Intelligent Education</h2>
           <p class="brand-desc">
-            结合最前沿的人工智能技术，为您提供个性化学习路径、智能作业批改与实时答疑服务。
+            Powered by cutting-edge AI, we provide personalized learning paths, intelligent grading, and real-time Q&A.
           </p>
           <div class="feature-list">
             <div class="feature-item">
               <span class="dot"></span>
-              <span>激发学习潜能，重塑教育生态</span>
+              <span>Unlock learning potential, reshape education</span>
             </div>
             <div class="feature-item">
               <span class="dot"></span>
-              <span>数据驱动教学，精准提升效果</span>
+              <span>Data-driven teaching, precise improvement</span>
             </div>
             <div class="feature-item">
               <span class="dot"></span>
-              <span>全天候智能伴学，解答每一个疑问</span>
+              <span>Always-on AI companion to answer every question</span>
             </div>
           </div>
         </div>
@@ -40,15 +40,15 @@
       <div class="right-panel">
         <div class="form-container">
           <div class="form-header">
-            <h3>欢迎回来</h3>
-            <p class="subtitle">请登录您的账号以继续</p>
+            <h3>Welcome Back</h3>
+            <p class="subtitle">Please log in to continue</p>
           </div>
           
           <el-form ref="formRef" :model="form" :rules="rules" class="auth-form" size="large">
             <el-form-item prop="username">
               <el-input 
                 v-model="form.username" 
-                placeholder="请输入用户名" 
+                placeholder="Username" 
                 prefix-icon="User"
                 class="custom-input"
               />
@@ -58,7 +58,7 @@
               <el-input 
                 v-model="form.password" 
                 type="password" 
-                placeholder="请输入密码" 
+                placeholder="Password" 
                 show-password 
                 prefix-icon="Lock"
                 @keyup.enter="handleLogin"
@@ -67,19 +67,19 @@
             </el-form-item>
             
             <div class="form-options">
-              <el-checkbox v-model="rememberMe">记住我</el-checkbox>
-              <a href="#" class="forgot-link">忘记密码？</a>
+              <el-checkbox v-model="rememberMe">Remember me</el-checkbox>
+              <a href="#" class="forgot-link">Forgot password?</a>
             </div>
 
             <div class="form-actions">
               <el-button type="primary" class="submit-btn" :loading="loading" @click="handleLogin">
-                立即登录
+                Sign In
               </el-button>
             </div>
             
             <div class="form-footer">
-              <span>还没有账号？</span>
-              <router-link to="/register" class="link-text">免费注册</router-link>
+              <span>Don’t have an account?</span>
+              <router-link to="/register" class="link-text">Create one</router-link>
             </div>
           </el-form>
         </div>
@@ -106,8 +106,8 @@ const form = reactive({
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  username: [{ required: true, message: 'Please enter username', trigger: 'blur' }],
+  password: [{ required: true, message: 'Please enter password', trigger: 'blur' }]
 }
 
 async function handleLogin() {
@@ -117,14 +117,16 @@ async function handleLogin() {
       loading.value = true
       try {
         await authStore.login(form)
-        ElMessage.success('登录成功')
-        if (authStore.role === 'teacher') {
+        ElMessage.success('Signed in successfully')
+        if (authStore.role === 'teacher' || authStore.role === 'admin') {
            router.push('/problems') 
+        } else if (authStore.role === 'student') {
+           router.push('/student-assignments')
         } else {
-           router.push('/chat') 
+           router.push('/classes')
         }
       } catch (e: any) {
-        ElMessage.error(e.response?.data?.detail || '登录失败')
+        ElMessage.error(e.response?.data?.detail || 'Sign in failed')
       } finally {
         loading.value = false
       }

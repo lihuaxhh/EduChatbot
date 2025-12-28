@@ -16,19 +16,19 @@
       </div>
       <el-menu :collapse="collapsed" :default-active="active" router class="side-nav">
         <!-- Common -->
-        <el-menu-item index="/chat"><el-icon><ChatLineRound /></el-icon><span>学习助手</span></el-menu-item>
-        <el-menu-item index="/notifications"><el-icon><Bell /></el-icon><span>通知</span></el-menu-item>
-        <el-menu-item index="/classes"><el-icon><User /></el-icon><span>班级管理</span></el-menu-item>
+        <el-menu-item v-if="authStore.role === 'admin'" index="/chat"><el-icon><ChatLineRound /></el-icon><span>Assistant</span></el-menu-item>
+        <el-menu-item v-if="authStore.role === 'admin'" index="/notifications"><el-icon><Bell /></el-icon><span>Notifications</span></el-menu-item>
+        <el-menu-item index="/classes"><el-icon><User /></el-icon><span>Class Management</span></el-menu-item>
         
         <!-- Teacher / Admin -->
-        <el-menu-item v-if="authStore.role === 'teacher' || authStore.role === 'admin'" index="/problems"><el-icon><Document /></el-icon><span>题库管理</span></el-menu-item>
-        <el-menu-item v-if="authStore.role === 'teacher' || authStore.role === 'admin' || authStore.role === 'student'" index="/results"><el-icon><DataAnalysis /></el-icon><span>批改结果</span></el-menu-item>
-        <el-menu-item v-if="authStore.role === 'teacher' || authStore.role === 'admin'" index="/knowledge"><el-icon><DataAnalysis /></el-icon><span>数据分析</span></el-menu-item>
+        <el-menu-item v-if="authStore.role === 'teacher' || authStore.role === 'admin'" index="/problems"><el-icon><Document /></el-icon><span>Problem Bank</span></el-menu-item>
+        <el-menu-item v-if="authStore.role === 'teacher' || authStore.role === 'admin' || authStore.role === 'student'" index="/results"><el-icon><DataAnalysis /></el-icon><span>Grading Results</span></el-menu-item>
+        <el-menu-item v-if="authStore.role === 'admin'" index="/knowledge"><el-icon><DataAnalysis /></el-icon><span>Analytics</span></el-menu-item>
 
         <!-- Student / Admin -->
-        <el-menu-item v-if="authStore.role === 'student' || authStore.role === 'admin'" index="/student-assignments"><el-icon><Edit /></el-icon><span>学生作业</span></el-menu-item>
-        <el-menu-item v-if="authStore.role === 'student' || authStore.role === 'admin'" index="/practice"><el-icon><Reading /></el-icon><span>练习</span></el-menu-item>
-        <el-menu-item v-if="authStore.role === 'student' || authStore.role === 'admin'" index="/wrongbook"><el-icon><Memo /></el-icon><span>错题本</span></el-menu-item>
+        <el-menu-item v-if="authStore.role === 'student' || authStore.role === 'admin'" index="/student-assignments"><el-icon><Edit /></el-icon><span>Student Assignments</span></el-menu-item>
+        <el-menu-item v-if="authStore.role === 'student' || authStore.role === 'admin'" index="/practice"><el-icon><Reading /></el-icon><span>Practice</span></el-menu-item>
+        <el-menu-item v-if="authStore.role === 'student' || authStore.role === 'admin'" index="/wrongbook"><el-icon><Memo /></el-icon><span>Wrongbook</span></el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -40,10 +40,10 @@
         </div>
         <div style="display:flex; align-items:center; gap:12px;">
           <div style="display:flex; gap:8px;">
-            <el-button v-if="authStore.role === 'teacher' || authStore.role === 'admin'" size="small" type="primary" class="ripple" @click="go('/problems')">新建作业</el-button>
-            <el-button v-if="authStore.role === 'teacher' || authStore.role === 'admin'" size="small" class="ripple btn-outline" @click="go('/knowledge')">进入分析</el-button>
+            <el-button v-if="authStore.role === 'teacher' || authStore.role === 'admin'" size="small" type="primary" class="ripple" @click="go('/problems')">New Assignment</el-button>
+            <el-button v-if="authStore.role === 'admin'" size="small" class="ripple btn-outline" @click="go('/knowledge')">Open Analytics</el-button>
           </div>
-          <el-badge :value="unreadCount" class="item"><el-button circle @click="go('/notifications')"><el-icon><Bell /></el-icon></el-button></el-badge>
+          <el-badge v-if="authStore.role === 'admin'" :value="unreadCount" class="item"><el-button circle @click="go('/notifications')"><el-icon><Bell /></el-icon></el-button></el-badge>
           
           <el-dropdown trigger="click" @command="handleCommand">
             <div class="user-profile-header">
@@ -54,8 +54,8 @@
             </div>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人资料</el-dropdown-item>
-                <el-dropdown-item command="logout" divided style="color: #ef4444;">退出登录</el-dropdown-item>
+                <el-dropdown-item command="profile">Profile</el-dropdown-item>
+                <el-dropdown-item command="logout" divided style="color: #ef4444;">Log Out</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -88,18 +88,18 @@ const asideWidth = computed(() => collapsed.value ? '64px' : 'clamp(200px, 22vw,
 const crumbs = computed(() => {
   const parts = route.path.split('/').filter(Boolean)
   const map: Record<string, string> = {
-    chat: '学习助手',
-    problems: '题库管理',
-    'student-assignments': '学生作业',
-    paper: '学生作业',
-    results: '批改结果',
-    practice: '练习',
-    wrongbook: '错题本',
-    knowledge: '数据分析',
-    stats: '作业统计',
-    profile: '个人资料',
-    notifications: '通知',
-    classes: '班级管理'
+    chat: 'Assistant',
+    problems: 'Problem Bank',
+    'student-assignments': 'Student Assignments',
+    paper: 'Student Assignments',
+    results: 'Grading Results',
+    practice: 'Practice',
+    wrongbook: 'Wrongbook',
+    knowledge: 'Analytics',
+    stats: 'Assignment Stats',
+    profile: 'Profile',
+    notifications: 'Notifications',
+    classes: 'Class Management'
   }
   return parts.map(p => map[p] || p)
 })
@@ -148,7 +148,11 @@ async function loadUnread() {
     unreadCount.value = items.filter(i => !i.is_read).length
   } catch {}
 }
-onMounted(loadUnread)
+onMounted(() => {
+  if (authStore.role === 'admin') {
+    loadUnread()
+  }
+})
 
 function handleCommand(command: string) {
   if (command === 'profile') {

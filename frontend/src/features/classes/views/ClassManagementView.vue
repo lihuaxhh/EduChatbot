@@ -2,82 +2,82 @@
   <div class="page-wrap">
     <div class="toolbar card-soft" style="margin-bottom:12px;">
       <div class="toolbar-left">
-        <h2 class="title-gradient-indigo" style="margin:0;">班级管理</h2>
+        <h2 class="title-gradient-indigo" style="margin:0;">Class Management</h2>
       </div>
       <div class="toolbar-right" style="display:flex; gap:8px;">
-        <el-button size="small" class="btn-outline" @click="refresh">刷新</el-button>
+        <el-button size="small" class="btn-outline" @click="refresh">Refresh</el-button>
       </div>
     </div>
     <div class="grid" v-if="!isStudent">
       <div class="mac-card soft-hover" style="padding:12px;">
-        <div class="panel-title">成员</div>
+        <div class="panel-title">Members</div>
         <el-scrollbar height="420px" style="margin-top:8px;">
           <div class="panel-list">
             <div v-for="m in members" :key="`${m.role}-${m.id}`" class="panel-item">
-              <span>{{ m.role==='teacher' ? '教师' : '学生' }}：{{ m.name }}</span>
+              <span>{{ m.role==='teacher' ? 'Teacher' : 'Student' }}: {{ m.name }}</span>
               <el-tag v-if="m.student_number" size="small" type="info">{{ m.student_number }}</el-tag>
             </div>
           </div>
         </el-scrollbar>
       </div>
       <div class="mac-card soft-hover" style="padding:12px;">
-        <div class="panel-title">处理申请</div>
+        <div class="panel-title">Handle Requests</div>
         <el-scrollbar height="420px" style="margin-top:8px;">
           <div class="panel-list">
             <div v-for="r in requests" :key="r.id" class="panel-item" style="justify-content:space-between;">
               <div>
                 <div style="font-weight:600;">{{ r.student_name }}</div>
-                <div style="font-size:12px; color:#6b7280;">申请加入：{{ r.class_name }}</div>
+                <div style="font-size:12px; color:#6b7280;">Apply to join: {{ r.class_name }}</div>
               </div>
               <div style="display:flex; gap:6px;">
-                <el-button size="small" type="primary" @click="accept(r)">同意</el-button>
-                <el-button size="small" @click="reject(r)">拒绝</el-button>
+                <el-button size="small" type="primary" @click="accept(r)">Accept</el-button>
+                <el-button size="small" @click="reject(r)">Reject</el-button>
               </div>
             </div>
           </div>
         </el-scrollbar>
       </div>
       <div class="mac-card soft-hover" style="padding:12px;">
-        <div class="panel-title">邀请学生</div>
+        <div class="panel-title">Invite Students</div>
         <div style="display:flex; gap:8px; margin-top:8px;">
-          <el-input v-model="inviteName" placeholder="学生用户名" style="max-width:240px;" />
-          <el-button type="primary" @click="invite">发送邀请</el-button>
+          <el-input v-model="inviteName" placeholder="Student Username" style="max-width:240px;" />
+          <el-button type="primary" @click="invite">Send Invite</el-button>
         </div>
       </div>
     </div>
     <div class="grid" v-else>
       <div class="mac-card soft-hover" style="padding:12px;">
-        <div class="panel-title">成员</div>
+        <div class="panel-title">Members</div>
         <el-scrollbar height="420px" style="margin-top:8px;">
           <div class="panel-list">
             <div v-for="m in members" :key="`${m.role}-${m.id}`" class="panel-item">
-              <span>{{ m.role==='teacher' ? '教师' : '学生' }}：{{ m.name }}</span>
+              <span>{{ m.role==='teacher' ? 'Teacher' : 'Student' }}: {{ m.name }}</span>
               <el-tag v-if="m.student_number" size="small" type="info">{{ m.student_number }}</el-tag>
             </div>
           </div>
         </el-scrollbar>
       </div>
       <div class="mac-card soft-hover" style="padding:12px;">
-        <div class="panel-title">我的邀请</div>
+        <div class="panel-title">My Invitations</div>
         <el-scrollbar height="420px" style="margin-top:8px;">
           <div class="panel-list">
             <div v-for="r in requests" :key="r.id" class="panel-item" style="justify-content:space-between;">
               <div>
-                <div style="font-weight:600;">来自：{{ r.class_name }}</div>
+                <div style="font-weight:600;">From: {{ r.class_name }}</div>
               </div>
               <div style="display:flex; gap:6px;">
-                <el-button size="small" type="primary" @click="accept(r)">接受</el-button>
-                <el-button size="small" @click="reject(r)">拒绝</el-button>
+                <el-button size="small" type="primary" @click="accept(r)">Accept</el-button>
+                <el-button size="small" @click="reject(r)">Reject</el-button>
               </div>
             </div>
           </div>
         </el-scrollbar>
       </div>
       <div class="mac-card soft-hover" style="padding:12px;">
-        <div class="panel-title">申请加入班级</div>
+        <div class="panel-title">Apply to Join Class</div>
         <div style="display:flex; gap:8px; margin-top:8px;">
-          <el-input v-model="applyClass" placeholder="班级名称" style="max-width:240px;" />
-          <el-button type="primary" @click="apply">发送申请</el-button>
+          <el-input v-model="applyClass" placeholder="Class Name" style="max-width:240px;" />
+          <el-button type="primary" @click="apply">Submit Application</el-button>
         </div>
       </div>
     </div>
@@ -102,7 +102,7 @@ async function refresh() {
     members.value = await listMembers()
     requests.value = await listRequests()
   } catch {
-    ElMessage.error('加载失败')
+    ElMessage.error('Load failed')
   }
 }
 
@@ -124,9 +124,9 @@ async function invite() {
   if (!inviteName.value) return
   try {
     await inviteStudent(inviteName.value)
-    ElMessage.success('邀请已发送')
+    ElMessage.success('Invitation sent')
   } catch {
-    ElMessage.error('邀请失败')
+    ElMessage.error('Invitation failed')
   }
 }
 
@@ -134,9 +134,9 @@ async function apply() {
   if (!applyClass.value) return
   try {
     await applyJoin(applyClass.value)
-    ElMessage.success('申请已发送')
+    ElMessage.success('Application submitted')
   } catch {
-    ElMessage.error('申请失败')
+    ElMessage.error('Application failed')
   }
 }
 
@@ -167,4 +167,3 @@ onMounted(refresh)
   border-radius: 8px;
 }
 </style>
-

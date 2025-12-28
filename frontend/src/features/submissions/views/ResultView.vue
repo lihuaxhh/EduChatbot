@@ -3,28 +3,28 @@
   <div v-else class="page-wrap">
     <div class="toolbar card-soft" style="margin-bottom:12px;">
       <div class="toolbar-left">
-        <h2 class="title-gradient-teal" style="margin:0;">批改结果</h2>
-        <span style="margin-left:8px; color:#606266;">作业ID：{{ assignmentId }}</span>
+        <h2 class="title-gradient-teal" style="margin:0;">Grading Results</h2>
+        <span style="margin-left:8px; color:#606266;">Assignment ID: {{ assignmentId }}</span>
       </div>
       <div class="toolbar-right">
         <div style="display:flex; align-items:center; gap:12px;">
           <div style="display:flex; gap:14px; color:#374151; font-weight:600;">
-            <span>正确率 {{ accuracy }}%</span>
-            <span>正确 {{ correctCount }}</span>
-            <span>错误 {{ wrongCount }}</span>
+            <span>Accuracy {{ accuracy }}%</span>
+            <span>Correct {{ correctCount }}</span>
+            <span>Wrong {{ wrongCount }}</span>
           </div>
           <el-switch
             v-model="showAll"
             inline-prompt
-            active-text="显示全部"
-            inactive-text="仅错误"
+            active-text="Show All"
+            inactive-text="Only Wrong"
             @change="applyModeFromToggle"
           />
         </div>
       </div>
     </div>
-    <div v-if="loading">加载中...</div>
-    <div v-else-if="results.length===0" class="card-soft" style="padding:24px; color:#909399;">暂无批改结果</div>
+    <div v-if="loading">Loading...</div>
+    <div v-else-if="results.length===0" class="card-soft" style="padding:24px; color:#909399;">No grading results</div>
     <div v-else class="results-grid">
       <div style="display:grid; grid-template-columns: 1fr; gap:20px;">
         <div
@@ -39,19 +39,19 @@
           <div style="display:flex; align-items:center; gap:8px;">
             <el-icon v-if="isCollapsed(res)"><ArrowRight /></el-icon>
             <el-icon v-else><ArrowDown /></el-icon>
-            <span>第 {{ idx + 1 }} 题</span>
+            <span>Question {{ idx + 1 }}</span>
           </div>
           <el-tag :type="res.is_correct ? 'success' : 'danger'" size="small">
-            {{ res.is_correct ? '正确' : '错误' }}
+            {{ res.is_correct ? 'Correct' : 'Incorrect' }}
           </el-tag>
         </div>
         <el-collapse-transition>
         <div v-show="!isCollapsed(res)" style="margin-bottom:8px;">
-            <strong>学生答案：</strong>
+            <strong>Student Answer:</strong>
             <div v-if="res.image_path || res.student_answer.includes('[IMAGE]')">
                 <img :src="getImageUrl(res)" style="max-width:300px; border:1px solid #ddd; margin: 5px 0;" />
                 <div v-if="res.student_answer && !res.student_answer.startsWith('[IMAGE]')">
-                    <small>OCR识别内容: {{ res.student_answer }}</small>
+                    <small>OCR Content: {{ res.student_answer }}</small>
                 </div>
             </div>
             <div v-else>{{ res.student_answer }}</div>
@@ -62,54 +62,54 @@
             <div v-if="res.is_correct">
                 <div style="color:#067b2d; font-weight:600; display:flex; align-items:center; gap:10px;">
                   <div style="display:flex; align-items:center; gap:6px;">
-                    <el-icon><Check /></el-icon><span>回答正确</span>
+                    <el-icon><Check /></el-icon><span>Correct Answer</span>
                   </div>
                   <div style="display:flex; gap:6px;">
-                    <el-button size="small" class="btn-outline" @click="viewQuestion(res.question_id)">查看题目</el-button>
-                    <el-button size="small" type="primary" @click="toggleCollapse(res)">折叠</el-button>
+                    <el-button size="small" class="btn-outline" @click="viewQuestion(res.question_id)">View Question</el-button>
+                    <el-button size="small" type="primary" @click="toggleCollapse(res)">Collapse</el-button>
                   </div>
                 </div>
             </div>
             <div v-else>
                 <div style="color:#f56c6c; font-weight:bold; margin-bottom:4px;">
-                    <el-icon><Close /></el-icon> 回答错误
+                    <el-icon><Close /></el-icon> Incorrect Answer
                 </div>
                 <div v-if="res.error_type" style="margin-bottom:4px;">
                     <el-tag type="danger" size="small">{{ formatErrorType(res.error_type) }}</el-tag>
                 </div>
                 <div style="margin-top:8px;">
-                  <el-button size="small" class="btn-outline" @click="viewQuestion(res.question_id)">查看题目</el-button>
-                  <el-button size="small" type="primary" @click="toggleAnswer(res.question_id)">查看答案</el-button>
+                  <el-button size="small" class="btn-outline" @click="viewQuestion(res.question_id)">View Question</el-button>
+                  <el-button size="small" type="primary" @click="toggleAnswer(res.question_id)">Show Answer</el-button>
                 </div>
                 <el-collapse-transition>
                   <div v-show="isAnswerShown(res.question_id)" style="margin-top:10px; padding:10px; background:#fff; border:1px dashed #ddd; border-radius:6px;">
                     <div style="margin-bottom:8px;">
-                      <strong>标准答案：</strong>
-                      <LatexText :content="answersMap[res.question_id] || '加载中...'" />
+                      <strong>Reference Answer:</strong>
+                      <LatexText :content="answersMap[res.question_id] || 'Loading...'" />
                     </div>
                     <div v-if="res.analysis" style="color:#606266; font-size:14px; line-height:1.5;">
-                      <strong>解析：</strong>
+                      <strong>Explanation:</strong>
                       <LatexText :content="res.analysis" />
                     </div>
                   </div>
                 </el-collapse-transition>
                 <div style="margin-top:8px;">
-                    <div style="color:#374151; font-weight:600; margin-bottom:6px;">推荐练习</div>
+                    <div style="color:#374151; font-weight:600; margin-bottom:6px;">Recommended Practice</div>
                 <template v-if="getRecs(res.question_id).length > 0">
                   <div style="display:flex; flex-wrap:wrap; gap:8px;">
                     <div v-for="item in getRecs(res.question_id)" :key="item.id" class="recommend-chip">
                       <span>#{{ item.id }}</span>
                       <div style="display:flex; gap:6px;">
-                        <el-button size="small" class="btn-outline" @click="viewQuestion(item.id)">查看题目</el-button>
+                        <el-button size="small" class="btn-outline" @click="viewQuestion(item.id)">View Question</el-button>
                         <el-button size="small" :type="inPractice(item.id) ? 'danger' : 'success'" @click="togglePractice(item.id)">
-                          {{ inPractice(item.id) ? '删除' : '加入练习清单' }}
+                          {{ inPractice(item.id) ? 'Remove' : 'Add to Practice' }}
                         </el-button>
                       </div>
                     </div>
                   </div>
                 </template>
                     <template v-else>
-                      <div style="color:#909399; font-size:13px;">暂未找到合适的相似题目</div>
+                      <div style="color:#909399; font-size:13px;">No similar questions found</div>
                     </template>
                 </div>
             </div>
@@ -118,27 +118,27 @@
       </div>
       <div class="aside-sticky" style="max-width:300px; justify-self:end;">
         <div class="panel">
-          <div class="panel-title">练习清单</div>
-          <div style="font-size:13px; color:#606266;">共 {{ practice.list.length }} 题</div>
+          <div class="panel-title">Practice List</div>
+          <div style="font-size:13px; color:#606266;">Total {{ practice.list.length }} questions</div>
           <el-scrollbar height="420px" style="margin-top:6px;">
             <div class="panel-list">
               <div v-for="id in practice.list" :key="id" class="panel-item" style="display:flex; justify-content:space-between; align-items:center;">
-                <span>题目ID：{{ id }}</span>
+                <span>Question ID: {{ id }}</span>
                 <div style="display:flex; gap:6px;">
-                  <el-button size="small" @click="viewQuestion(id)">查看</el-button>
-                  <el-button size="small" type="danger" @click="practice.remove(id)">删除</el-button>
+                  <el-button size="small" @click="viewQuestion(id)">View</el-button>
+                  <el-button size="small" type="danger" @click="practice.remove(id)">Remove</el-button>
                 </div>
               </div>
             </div>
           </el-scrollbar>
           <div style="margin-top:12px;">
-            <el-button type="primary" style="width:100%;" @click="router.push('/practice')">去练习</el-button>
+            <el-button type="primary" style="width:100%;" @click="router.push('/practice')">Go to Practice</el-button>
           </div>
           <div class="divider-soft" style="margin:12px 0;"></div>
-          <div style="font-weight:600; margin-bottom:6px;">查看历史作业</div>
+          <div style="font-weight:600; margin-bottom:6px;">View Past Assignments</div>
           <div style="display:flex; gap:8px;">
             <el-input-number v-model="historyId" :min="1" />
-            <el-button class="btn-outline" @click="goHistory">查看结果</el-button>
+            <el-button class="btn-outline" @click="goHistory">View Results</el-button>
           </div>
         </div>
       </div>
@@ -150,24 +150,24 @@
   
 
   <!-- 题目预览弹窗，仅展示题干，支持查看答案 -->
-  <el-dialog v-model="preview" :title="preview ? ('题目 '+preview.id) : ''" width="600px">
+  <el-dialog v-model="preview" :title="preview ? ('Question '+preview.id) : ''" width="600px">
     <div v-if="preview">
       <div style="margin-bottom:8px;">
-        <strong>题干：</strong>
+        <strong>Question:</strong>
         <LatexText :content="preview.question" />
       </div>
       <div style="margin-top:8px;">
-        <el-button size="small" type="primary" @click="togglePreviewAnswer()">查看答案</el-button>
+        <el-button size="small" type="primary" @click="togglePreviewAnswer()">Show Answer</el-button>
       </div>
       <el-collapse-transition>
         <div v-show="previewShowAnswer" style="margin-top:8px;">
-          <strong>答案：</strong>
+          <strong>Answer:</strong>
           <LatexText :content="preview.answer" />
         </div>
       </el-collapse-transition>
     </div>
     <template #footer>
-      <el-button @click="preview=null">关闭</el-button>
+      <el-button @click="preview=null">Close</el-button>
     </template>
   </el-dialog>
 </template>
@@ -247,7 +247,7 @@ async function loadData(aid: number, sid: number) {
     await fetchRecs()
     restoreScroll()
   } catch (e) {
-    ElMessage.error('加载结果失败')
+    ElMessage.error('Failed to load results')
   } finally {
     loading.value = false
   }
@@ -310,11 +310,11 @@ function getImageUrl(res: SubmissionResult) {
 
 function formatErrorType(type: string) {
     const map: Record<string, string> = {
-        'knowledge': '知识点错误',
-        'calculation': '计算错误',
-        'misreading': '审题错误',
-        'logic': '逻辑错误',
-        'method': '方法错误'
+        'knowledge': 'Knowledge Error',
+        'calculation': 'Calculation Error',
+        'misreading': 'Misreading',
+        'logic': 'Logical Error',
+        'method': 'Method Error'
     }
     return map[type] || type
 }
@@ -329,7 +329,7 @@ async function viewQuestion(id: number) {
     preview.value = { id: q.id, question: q.question, answer: q.answer }
     previewShowAnswer.value = false
   } catch (e) {
-    ElMessage.error('加载题目失败')
+    ElMessage.error('Failed to load question')
   }
 }
 

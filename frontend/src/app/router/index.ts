@@ -20,7 +20,7 @@ const router = createRouter({
     { path: '/notifications', component: () => import('@/features/notifications/views/NotificationsView.vue') },
     { path: '/classes', component: () => import('@/features/classes/views/ClassManagementView.vue') },
     { path: '/profile', component: () => import('@/features/profile/views/ProfileView.vue') },
-    { path: '/', redirect: '/chat' }
+    { path: '/', redirect: '/classes' }
   ]
 })
 
@@ -31,6 +31,35 @@ router.beforeEach((to, _from, next) => {
 
   if (authRequired && !loggedIn) {
     return next('/login');
+  }
+
+  function getRole(): string | null {
+    const t = localStorage.getItem('token') || '';
+    if (!t || !t.includes('.')) return null;
+    try {
+      const base64Url = t.split('.')[1];
+      if (!base64Url) return null;
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload).role || null;
+    } catch { return null; }
+  }
+  const role = getRole();
+  const teacherBlocked = ['/chat', '/notifications', '/knowledge'];
+  const studentBlocked = ['/chat', '/notifications'];
+
+  if (role === 'teacher' && teacherBlocked.includes(to.path)) {
+    return next('/problems');
+  }
+  if (role === 'student' && studentBlocked.includes(to.path)) {
+    return next('/student-assignments');
+  }
+  if (to.path === '/') {
+    if (role === 'teacher' || role === 'admin') return next('/problems');
+    if (role === 'student') return next('/student-assignments');
+    return next('/classes');
   }
 
   next();
